@@ -1,3 +1,10 @@
+import elaraImg from '../assets/elara_celestia.png';
+import visistaImg from '../assets/visista_villas.png';
+import embassyImg from '../assets/embassy_astra.png';
+import lodhaImg from '../assets/lodha_mirabelle.png';
+import quietImg from '../assets/quiet_earth.png';
+import aeropolisImg from '../assets/aeropolis_plots.png';
+
 export const PROPERTIES = [
   {
     id: "lt-realty-elara-celestia",
@@ -22,9 +29,9 @@ export const PROPERTIES = [
     reraId: "PRM/KA/RERA/1251/309/PR/241018/007142",
     featured: true,
     badges: ["Featured Luxury", "Under Construction", "Hebbal Hub"],
-    heroImage: "/images/elara_celestia.png",
+    heroImage: elaraImg,
     images: [
-      "/images/elara_celestia.png",
+      elaraImg,
       "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80"
@@ -79,9 +86,9 @@ export const PROPERTIES = [
     reraId: "PRM/KA/RERA/1251/309/PR/220315/004812",
     featured: true,
     badges: ["Ready to Move In", "Yelahanka Premier", "Low Density"],
-    heroImage: "/images/visista_villas.png",
+    heroImage: visistaImg,
     images: [
-      "/images/visista_villas.png",
+      visistaImg,
       "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80",
       "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=80"
     ],
@@ -131,9 +138,9 @@ export const PROPERTIES = [
     reraId: "PRM/KA/RERA/1251/309/PR/241105/007201",
     featured: true,
     badges: ["High Capital Growth", "Iconic Address", "Under Construction"],
-    heroImage: "/images/embassy_astra.png",
+    heroImage: embassyImg,
     images: [
-      "/images/embassy_astra.png",
+      embassyImg,
       "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1200&q=80",
       "https://images.unsplash.com/photo-1600573472550-8090b5e0745e?auto=format&fit=crop&w=1200&q=80"
     ],
@@ -182,9 +189,9 @@ export const PROPERTIES = [
     reraId: "PRM/KA/RERA/1251/309/PR/231210/006500",
     featured: true,
     badges: ["Tech Corridor Special", "High Rental Return", "Lodha Quality"],
-    heroImage: "/images/lodha_mirabelle.png",
+    heroImage: lodhaImg,
     images: [
-      "/images/lodha_mirabelle.png",
+      lodhaImg,
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80"
     ],
     description: "Located right inside the thriving Manyata Tech Park precinct, Lodha Mirabelle Phase 3 combines walk-to-work convenience with Lodha's signature luxury lifestyle design.",
@@ -231,9 +238,9 @@ export const PROPERTIES = [
     reraId: "PRM/KA/RERA/1251/309/PR/180516/001740",
     featured: false,
     badges: ["Biophilic Luxury", "Terrace Gardens", "Row House"],
-    heroImage: "/images/quiet_earth.png",
+    heroImage: quietImg,
     images: [
-      "/images/quiet_earth.png"
+      quietImg
     ],
     description: "Crafted by Total Environment, these biophilic row houses feature private terrace gardens, natural timber finishes, and custom furniture fittings.",
     longDescription: "Every house is designed to blend seamlessly into lush green gardens, with expansive glass windows and automated climate controls.",
@@ -268,9 +275,9 @@ export const PROPERTIES = [
     reraId: "PRM/KA/RERA/1250/303/PR/240212/006611",
     featured: false,
     badges: ["High Capital Appreciation", "Airport Belt", "RERA Approved Plots"],
-    heroImage: "/images/aeropolis_plots.png",
+    heroImage: aeropolisImg,
     images: [
-      "/images/aeropolis_plots.png"
+      aeropolisImg
     ],
     description: "Premium RERA-approved plotted development in Devanahalli, the high-growth Aerotropolis Corridor near KIADB IT Hardware Park and Boeing R&D campus.",
     longDescription: "Invest in land parcels with underground cabling, wide asphalted roads, grand entrance plaza, and a fully functional 15,000 sq.ft. clubhouse.",
