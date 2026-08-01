@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, MapPin, Phone, Mail } from 'lucide-react';
+import logoImg from '../assets/logo.png';
 
 export default function Footer() {
   return (
@@ -12,7 +13,7 @@ export default function Footer() {
           {/* Column 1: Brand Narrative */}
           <div className="md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-6">
-              <img src="/logo.png" alt="QuestSpaces Logo" width="28" height="28" className="w-[28px] h-[28px] object-contain" />
+              <img src={logoImg} alt="QuestSpaces Logo" width="28" height="28" className="w-[28px] h-[28px] object-contain" />
               <span className="font-display-lg text-[22px] tracking-tight text-primary font-extrabold header-anchor">
                 QuestSpaces
               </span>

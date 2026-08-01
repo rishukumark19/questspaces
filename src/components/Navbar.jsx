@@ -4,6 +4,8 @@ import {
   Heart, Menu, X, ChevronDown 
 } from 'lucide-react';
 
+import logoImg from '../assets/logo.png';
+
 export default function Navbar({ savedCount, onOpenVIPModal, onOpenSavedDrawer }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -39,7 +41,7 @@ export default function Navbar({ savedCount, onOpenVIPModal, onOpenSavedDrawer }
           
           {/* Logo - Brand Image & Text */}
           <Link to="/" className="flex items-center gap-2 group">
-            <img src="/logo.png" alt="QuestSpaces Logo" width="28" height="28" className="w-[28px] h-[28px] object-contain transition-transform group-hover:scale-105" />
+            <img src={logoImg} alt="QuestSpaces Logo" width="28" height="28" className="w-[28px] h-[28px] object-contain transition-transform group-hover:scale-105" />
             <span className="font-display-lg text-[24px] tracking-tight text-primary font-extrabold header-anchor">
               QuestSpaces
             </span>
