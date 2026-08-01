@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 
 // Layout & Modals
 import Navbar from './components/Navbar';
@@ -77,7 +77,7 @@ export default function App() {
   const savedPropertiesList = PROPERTIES.filter(p => savedIds.includes(p.id));
 
   return (
-    <Router>
+    <Router basename="/questspaces">
       <ScrollToTop />
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <Navbar 
