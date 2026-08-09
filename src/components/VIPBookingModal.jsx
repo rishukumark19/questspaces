@@ -1,12 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { submitLead } from '../lib/leads';
 
 export default function VIPBookingModal({ isOpen, onClose, propertyTitle }) {
   const [submitted, setSubmitted] = useState(false);
+  const getLocationOption = (title) => {
+    if (!title) return 'Hebbal';
+    const lowerTitle = title.toLowerCase();
+    if (lowerTitle.includes('yelahanka') || lowerTitle.includes('visista')) return 'Yelahanka';
+    if (lowerTitle.includes('manyata') || lowerTitle.includes('mirabelle')) return 'Manyata Tech Park';
+    if (lowerTitle.includes('devanahalli') || lowerTitle.includes('aeropolis')) return 'Devanahalli';
+    if (lowerTitle.includes('thanisandra') || lowerTitle.includes('quiet earth')) return 'Thanisandra';
+    return 'Hebbal';
+  };
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     email: '',
-    location: propertyTitle || 'Hebbal',
+    location: getLocationOption(propertyTitle),
     budget: '₹2.5 Cr - ₹3.5 Cr',
     intent: 'Buying Residence'
   });
@@ -16,15 +27,27 @@ export default function VIPBookingModal({ isOpen, onClose, propertyTitle }) {
       setSubmitted(false);
       setFormData(prev => ({
         ...prev,
-        location: propertyTitle || 'Hebbal'
+        location: getLocationOption(propertyTitle)
       }));
     }
   }, [isOpen, propertyTitle]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      await submitLead({
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        propertyTitle: propertyTitle || `Corridor: ${formData.location}`,
+        leadType: 'VIP Booking',
+        message: `Budget: ${formData.budget} | Intent: ${formData.intent}`
+      });
+    } catch (err) {
+      console.error('Lead submission warning:', err);
+    }
     setSubmitted(true);
   };
 
@@ -61,7 +84,7 @@ export default function VIPBookingModal({ isOpen, onClose, propertyTitle }) {
               Schedule Advisory Consultation
             </h3>
             <p className="font-body-md text-sm text-on-surface-variant mb-6">
-              Speak directly with Questspaces senior real estate strategists in Bengaluru. Zero pressure, complete transparency.
+              Speak directly with Quest Spaces senior real estate strategists in Bengaluru. Zero pressure, complete transparency.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">

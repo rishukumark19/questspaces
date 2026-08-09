@@ -4,6 +4,7 @@ import {
   Heart, Menu, X, ChevronDown 
 } from 'lucide-react';
 
+
 import logoImg from '../assets/logo.png';
 
 export default function Navbar({ savedCount, onOpenVIPModal, onOpenSavedDrawer }) {
@@ -40,11 +41,16 @@ export default function Navbar({ savedCount, onOpenVIPModal, onOpenSavedDrawer }
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop flex justify-between items-center">
           
           {/* Logo - Brand Image & Text */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <img src={logoImg} alt="QuestSpaces Logo" width="28" height="28" className="w-[28px] h-[28px] object-contain transition-transform group-hover:scale-105" />
-            <span className="font-display-lg text-[24px] tracking-tight text-primary font-extrabold header-anchor">
-              QuestSpaces
-            </span>
+          <Link to="/" className="flex items-center gap-3 group">
+            <img src={logoImg} alt="Quest Spaces Logo" className="w-8 h-8 object-contain transition-transform group-hover:scale-105" />
+            <div className="flex flex-col">
+              <span className="font-serif text-2xl font-semibold text-[#0F172A] leading-none tracking-[0.02em] transition-colors group-hover:text-[#C9A35A]">
+                Quest Spaces
+              </span>
+              <span className="text-[9px] tracking-[0.18em] text-[#6B7280] uppercase mt-1.5 font-sans font-semibold">
+                Real Estate Advisory
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Navigation Links */}

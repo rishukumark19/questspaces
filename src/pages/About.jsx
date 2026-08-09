@@ -35,15 +35,15 @@ export default function About({ onOpenVIPModal }) {
               Who We Are
             </span>
             <h2 className="text-[32px] font-semibold text-primary mb-6">
-              About QuestSpaces
+              About Quest Spaces
             </h2>
             <div className="flex flex-col gap-6">
               <p className="text-lg text-on-surface-variant leading-relaxed">
-                Welcome to <strong>Questspaces Pvt. Ltd.</strong>, a trusted real estate advisory crafted for discerning buyers and investors. We specialise in guiding clients through every stage of their property journey and help make confident, value-driven decisions.
+                Welcome to <strong>Quest Spaces Pvt. Ltd.</strong>, a trusted real estate advisory crafted for discerning buyers and investors. We specialise in guiding clients through every stage of their property journey and help make confident, value-driven decisions.
               </p>
               
               <p className="text-base text-on-surface-variant leading-relaxed">
-                We believe that finding the perfect property is more than just a transaction — it’s a journey. Founded in 2024, our mission has been to simplify the home search process and provide unparalleled support to our clients.
+                We believe that finding the perfect property is more than just a transaction — it’s a journey. Backed by over 15 years of deep real estate experience, our mission has been to simplify the home search process and provide unparalleled support to our clients.
               </p>
             </div>
           </div>
@@ -111,7 +111,7 @@ export default function About({ onOpenVIPModal }) {
           </div>
           <div className="relative h-[600px] rounded-xl overflow-hidden shadow-sm">
             <img
-              alt="Vivek Anand, Founder of QuestSpaces"
+              alt="Vivek Anand, Founder of Quest Spaces"
               className="w-full h-full object-cover"
               loading="lazy"
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhT6os7vhKVIVWCqR5pZKWpLcfp17WQNZnRc8gfMAS7YALeuEbtZxa0PQhdBjJjmDQCKDiScvdch3DNvUUzchjHQKp2HpLdNzag-32SgU_swPZgIz9JaYj7NuaO3UsvWZppEYn7eMsXAfzIrrudyOYLZGV8oftYKO5gsWRX7ba7oGlbC6GAkmGwH7SXy-VkvEjUWvDwe5J_RU3MpS1ShD8ka2J-XV9T-1lRrmRWPKz-UaEzOdyDU4J"
@@ -171,11 +171,11 @@ export default function About({ onOpenVIPModal }) {
         </div>
       </section>
 
-      {/* Why Questspaces Section */}
+      {/* Why Quest Spaces Section */}
       <section className="py-20 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
         <div className="text-center mb-16">
           <span className="text-gold font-label-bold text-label-sm uppercase tracking-[0.2em] block">Why Choose Us</span>
-          <h2 className="font-display-lg text-[32px] font-bold mt-4 text-primary">Why Questspaces</h2>
+          <h2 className="font-display-lg text-[32px] font-bold mt-4 text-primary">Why Quest Spaces</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-surface p-6 rounded-xl border border-outline-variant/20 shadow-sm">

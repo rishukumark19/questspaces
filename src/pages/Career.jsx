@@ -29,7 +29,7 @@ export default function Career() {
         {/* Why Work With Us */}
         <section className="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/20 shadow-sm mb-16">
           <h2 className="font-headline-md text-headline-md text-primary text-center mb-8">
-            Why Build Your Career With Questspaces
+            Why Build Your Career With Quest Spaces
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center p-4">

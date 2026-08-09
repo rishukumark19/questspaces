@@ -1,35 +1,44 @@
 import React from 'react';
 import { DEVELOPERS } from '../data/micromarkets';
 
-export default function DeveloperStrip({ lightBg = false }) {
+export default function DeveloperStrip() {
   // Duplicate array for seamless infinite scroll
-  const duplicatedDevelopers = [...DEVELOPERS, ...DEVELOPERS];
+  const duplicatedDevelopers = [...DEVELOPERS, ...DEVELOPERS, ...DEVELOPERS];
 
   return (
-    <section className={`py-12 border-t border-outline-variant/20 overflow-hidden ${lightBg ? 'bg-surface-container-lowest' : 'bg-[#0d1c32]'}`}>
-      <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop mb-8 text-center">
-        <span className={`text-xs uppercase tracking-[0.25em] font-extrabold block ${lightBg ? 'text-secondary' : 'text-gold'}`}>
-          PRESTIGIOUS DEVELOPER NETWORK
-        </span>
+    <section className="py-20 bg-surface-container-lowest border-y border-outline-variant/30 overflow-hidden">
+      <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop mb-12 text-center">
+        <h2 className="text-[12px] md:text-[14px] uppercase tracking-[0.3em] font-bold text-secondary mb-2">
+          Prestigious Developer Network
+        </h2>
+        <div className="h-px w-24 bg-gold mx-auto opacity-50"></div>
       </div>
 
-      <div className="relative flex overflow-hidden w-full group">
-        <div className="flex w-max animate-marquee items-center gap-10 px-5">
+      <div className="relative flex overflow-hidden w-full group mask-image-fade">
+        <div className="flex w-max animate-marquee items-center gap-2 md:gap-4 px-8">
           {duplicatedDevelopers.map((dev, i) => (
             <div 
               key={i} 
-              className="flex-shrink-0 flex items-center justify-center rounded-xl p-3 transition-all duration-300 w-[160px] h-[90px] bg-white shadow-sm hover:shadow-lg border border-outline-variant/10"
+              className="flex-shrink-0 flex items-center justify-center transition-all duration-500 h-[100px] md:h-[180px] mx-4 md:mx-6"
             >
               <img 
                 src={dev.logo} 
                 alt={`${dev.name} Logo`}
-                className="max-w-full max-h-full object-contain opacity-90 hover:opacity-100 hover:scale-105 transition-all duration-300"
+                className="h-full w-auto object-contain transition-all duration-500"
                 loading="lazy"
               />
             </div>
           ))}
         </div>
       </div>
+      
+      {/* Define mask-image for fading edges in CSS or inline style if needed. Tailwind might need a custom class or inline style. */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .mask-image-fade {
+          -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+          mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+        }
+      `}} />
     </section>
   );
 }

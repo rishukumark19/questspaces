@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 const TESTIMONIALS = [
   {
-    quote: "From our first meeting, we knew we were in good hands. QuestSpaces' dedication to understanding our needs and finding the perfect home in Dubai was evident every step of the way.",
+    quote: "From our first meeting, we knew we were in good hands. Quest Spaces' dedication to understanding our needs and finding the perfect home in Bengaluru was evident every step of the way.",
     name: "Ali Bin Saleh",
     role: "Real Estate Investor",
     image: "https://lh3.googleusercontent.com/aida-public/AB6AXuB-nwSX3TCgA0zTHQ-SD8XKMorTKANdqBip1Nj1duYXcrdpse__IgWkJMPViVjJFUzHQhIcvfjaYfsQz7GnGSGLSXCHRjfRYPRisTeyWBO1tGJqB__8ZFAkcuiqgfiidYIywr8Nwci3MYzDRXWeJpp5gjyDFsDDAZAX_cWKpGW1LyBPCxNxyZC1gyHtJ2zmMzkh_8pZ2YROJcShK2KEBGxfv2hnzufQU7sHLO2bpKcKCMoK8LwUC-zgmusvXyZcfsYgjzncvoi3VAKc"
@@ -15,7 +15,7 @@ const TESTIMONIALS = [
     image: "https://lh3.googleusercontent.com/aida-public/AB6AXuD8fxZFpDWvdp-GIzlQXWU11J9g7ROACX3IEQVbeJcTpt05OOjxPwHq4oAUtmozNQM1zaPpEQ-n6znLar-kfo-2jIfDE7BbKZ1mQ5dWd4QmONVsp2uddwV1WiRX9quLU8I-jMlk988a3O3Wp72EnT9wT_8g2bnF6jzXAOkshietCheOYFQp-DbBjw7FctOnfLulE-ItwlFSBqJSVNd7pafzx-qN2jQnh8FaE2e8hat916cLoEr71Xh9NAN0VqJz36nWzyFUIM3cQJ3R"
   },
   {
-    quote: "QuestSpaces made the home loan and paperwork process absolutely seamless. We couldn't be happier with our new home in Whitefield.",
+    quote: "Quest Spaces made the home loan and paperwork process absolutely seamless. We couldn't be happier with our new home in Whitefield.",
     name: "Michael & Sarah",
     role: "Homeowners",
     image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBtZAiy3mUVtNO9awyqZ2X4QFd4yxQH8dTf7hcZ1tFjovQttfRzqcyNUWbHtskVMP2GsJ5z-GWWXFtzFdM5DzLtJpkuSTGMD74dsJ3zIXQPjlvpvpyQQ1NxrTqviRnK9_MMS1NtyQt4-EDQrvekIQspSMI4smA2SVcXy9JVfTIKwa6tLormiRF9CqJ7jKrRvgAkAtNIs2-b2dvJr3FXpkBwCEKDck1RGKoycPBtlXet-neGLcsuedzBN9zGZdGKVhKUz0wjIfxn5d9d"
@@ -111,18 +111,18 @@ export default function Services({ onOpenVIPModal }) {
             <div className="p-8 flex-1 flex flex-col justify-between relative z-10">
               <div>
                 <div className="flex items-center gap-4 mb-6">
-                  <span className="material-symbols-outlined text-gold text-4xl p-3 bg-white/10 backdrop-blur-md rounded-xl">finance_chip</span>
-                  <h2 className="text-2xl font-bold text-gold tracking-wide">Investment Consultation</h2>
+                  <span className="material-symbols-outlined text-[#C5A059] text-4xl p-3 bg-white/10 backdrop-blur-md rounded-xl">finance_chip</span>
+                  <h2 className="text-2xl font-bold text-[#C5A059] tracking-wide">Investment Consultation</h2>
                 </div>
                 <p className="font-body-md text-white/80 mb-6 leading-relaxed">
                   Maximize your returns with our strategic investment advice. We analyze market trends, identify lucrative opportunities, and provide personalized investment plans to help you build and grow your real estate portfolio.
                 </p>
               </div>
               <Link 
-                className="inline-flex items-center gap-2 text-gold font-label-bold text-label-sm hover:text-white transition-all uppercase tracking-wider font-bold w-fit mt-auto" 
+                className="inline-flex items-center gap-2 bg-[#C5A059] text-primary px-6 py-3 rounded-lg font-label-bold text-label-sm hover:bg-white hover:text-primary transition-all uppercase tracking-wider font-bold w-fit mt-auto shadow-md" 
                 to="/services/investment-consultation"
               >
-                VIEW ANALYSIS <span className="material-symbols-outlined text-sm group-hover:translate-x-2 transition-transform">arrow_forward</span>
+                VIEW ANALYSIS <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
               </Link>
             </div>
           </div>

@@ -79,6 +79,7 @@
   --radius-full:    9999px;
 
   /* ── Font Families (all Inter — propertydetial.html style) ── */
+  --font-serif:             "Playfair Display", Georgia, serif;
   --font-body-md:           "Inter", sans-serif;
   --font-label-sm:          "Inter", sans-serif;
   --font-label-md:          "Inter", sans-serif;

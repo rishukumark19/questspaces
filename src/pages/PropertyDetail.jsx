@@ -1,19 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { PROPERTIES } from '../data/properties';
+import { useProperty } from '../hooks/useProperty';
+import { submitLead } from '../lib/leads';
 
 export default function PropertyDetail({ savedIds, onToggleSave }) {
   const { id } = useParams();
-  const property = PROPERTIES.find(p => p.slug === id || p.id === id) || PROPERTIES[0];
+  const { property, loading } = useProperty(id);
 
-  const [activeImage, setActiveImage] = useState(property.heroImage);
+  const [activeImage, setActiveImage] = useState('');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [visitSubmitted, setVisitSubmitted] = useState(false);
 
+  const [emiInterest] = useState(8.5);
+  const [emiTenure] = useState(20);
+
+  useEffect(() => {
+    if (property) {
+      setActiveImage(property.heroImage || (property.images && property.images[0]) || '');
+    }
+  }, [property]);
+
+  if (loading || !property) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center p-8 bg-surface">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-on-surface-variant font-label-bold text-sm">Loading luxury residence details...</p>
+      </div>
+    );
+  }
+
+  const priceVal = property.priceValue || 30000000;
+  const r = emiInterest / 12 / 100;
+  const n = emiTenure * 12;
+  const emiAmount = Math.round(
+    (priceVal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1)
+  );
+
+  const formatINR = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
+
   const isSaved = savedIds.includes(property.id);
 
-  const handleVisitSubmit = (e) => {
+  const handleVisitSubmit = async (e) => {
     e.preventDefault();
+    const form = e.target;
+    const name = form.elements['pd-name']?.value || '';
+    const phone = form.elements['pd-phone']?.value || '';
+    const email = form.elements['pd-email']?.value || '';
+    const message = form.elements['pd-message']?.value || '';
+
+    try {
+      await submitLead({
+        name,
+        phone,
+        email,
+        propertyTitle: property.title,
+        leadType: 'Site Visit Request',
+        message
+      });
+    } catch (err) {
+      console.error('Lead submission warning:', err);
+    }
+
     setVisitSubmitted(true);
   };
 
@@ -195,9 +242,24 @@ export default function PropertyDetail({ savedIds, onToggleSave }) {
               <h1 className="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-on-surface mb-4">
                 {property.title}
               </h1>
-              <div className="flex items-center gap-2 text-on-surface-variant font-body-lg text-body-lg mb-8">
-                <span className="material-symbols-outlined">location_on</span>
-                <span>{property.location}</span>
+              <div className="flex flex-wrap items-center gap-4 text-on-surface-variant font-body-lg text-body-lg mb-8">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined">location_on</span>
+                  <span>{property.location}</span>
+                </div>
+                {property.reraId && (
+                  <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-xs uppercase tracking-wider bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                    <span className="material-symbols-outlined text-[16px]">verified</span> RERA Verified: {property.reraId}
+                  </div>
+                )}
+                <a 
+                  href={`https://wa.me/?text=Check out this premium property: ${property.title} in ${property.location}. Find out more on QuestSpaces!`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 text-[#25D366] font-bold text-xs uppercase tracking-wider bg-[#25D366]/10 px-3 py-1 rounded-full border border-[#25D366]/30 hover:bg-[#25D366]/20 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[16px]">share</span> Share on WhatsApp
+                </a>
               </div>
 
               {/* Quick specs */}
@@ -321,16 +383,26 @@ export default function PropertyDetail({ savedIds, onToggleSave }) {
               <div className="bg-surface-container-lowest p-8 rounded-xl premium-shadow border border-outline-variant/10">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="font-headline-sm text-headline-sm text-on-surface">Master Site Layout</h3>
-                  <button className="text-primary font-label-bold text-label-bold flex items-center gap-2 hover:underline bg-transparent border-none">
+                  <button 
+                    onClick={() => alert('PDF Brochure request initiated. Our team will email it to you shortly.')}
+                    className="text-primary font-label-bold text-label-bold flex items-center gap-2 hover:underline bg-transparent border-none cursor-pointer"
+                  >
                     <span className="material-symbols-outlined text-sm">download</span> Download PDF
                   </button>
                 </div>
-                <div className="h-80 bg-surface-container rounded-lg flex items-center justify-center border border-outline-variant/20 image-border-protect overflow-hidden">
+                <div className="h-80 bg-surface-container rounded-lg flex flex-col items-center justify-center border border-outline-variant/20 overflow-hidden relative group">
+                  <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                    <span className="material-symbols-outlined text-white text-4xl mb-2">lock</span>
+                    <p className="text-white font-bold">Available upon request</p>
+                  </div>
                   <img
-                    alt="Floor Plan Site Layout"
-                    className="w-full h-full object-contain opacity-80"
-                    src={property.images[1] || property.heroImage}
+                    alt="Floor Plan Site Layout Placeholder"
+                    className="w-full h-full object-cover opacity-30 blur-[2px]"
+                    src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80"
                   />
+                  <div className="absolute font-display-lg text-primary/50 font-bold text-2xl z-0 tracking-widest uppercase">
+                    Floor Plan Preview
+                  </div>
                 </div>
               </div>
             </section>
@@ -374,20 +446,37 @@ export default function PropertyDetail({ savedIds, onToggleSave }) {
                       type="text"
                     />
                   </div>
-                  <div>
-                    <label
-                      className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2"
-                      htmlFor="pd-email"
-                    >
-                      Email Address
-                    </label>
-                    <input
-                      required
-                      className="w-full bg-surface-bright border-b border-outline-variant/50 focus:border-primary-container focus:ring-0 px-0 py-2 font-body-md text-on-surface placeholder:text-on-surface-variant/60 transition-colors outline-none"
-                      id="pd-email"
-                      placeholder="Enter your email"
-                      type="email"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2"
+                        htmlFor="pd-phone"
+                      >
+                        Phone *
+                      </label>
+                      <input
+                        required
+                        className="w-full bg-surface-bright border-b border-outline-variant/50 focus:border-primary-container focus:ring-0 px-0 py-2 font-body-md text-on-surface placeholder:text-on-surface-variant/60 transition-colors outline-none"
+                        id="pd-phone"
+                        placeholder="Mobile number"
+                        type="tel"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2"
+                        htmlFor="pd-email"
+                      >
+                        Email Address
+                      </label>
+                      <input
+                        required
+                        className="w-full bg-surface-bright border-b border-outline-variant/50 focus:border-primary-container focus:ring-0 px-0 py-2 font-body-md text-on-surface placeholder:text-on-surface-variant/60 transition-colors outline-none"
+                        id="pd-email"
+                        placeholder="Enter your email"
+                        type="email"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label
@@ -427,6 +516,20 @@ export default function PropertyDetail({ savedIds, onToggleSave }) {
                     <p className="font-label-bold text-label-bold text-on-surface">Vivek Anand</p>
                     <p className="font-body-md text-body-md text-on-surface-variant text-sm">Managing Director</p>
                   </div>
+                </div>
+              </div>
+
+              {/* Inline EMI Widget */}
+              <div className="mt-8 pt-8 border-t border-outline-variant/30">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-label-bold text-label-bold text-primary flex items-center gap-2">
+                    <span className="material-symbols-outlined text-secondary">calculate</span> Estimated EMI
+                  </h3>
+                  <Link to="/home-loan" className="text-xs font-bold text-secondary uppercase hover:underline">Full Calc</Link>
+                </div>
+                <div className="bg-surface-bright p-4 rounded-lg border border-outline-variant/30">
+                  <p className="text-2xl font-bold text-primary mb-1">{formatINR(emiAmount)} <span className="text-sm font-normal text-on-surface-variant">/ month</span></p>
+                  <p className="text-xs text-on-surface-variant">Based on {formatINR(property.priceValue)} for {emiTenure} years @ {emiInterest}% p.a.</p>
                 </div>
               </div>
 

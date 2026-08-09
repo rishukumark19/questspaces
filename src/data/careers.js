@@ -8,7 +8,7 @@ export const CAREERS = [
     type: "Full-Time",
     summary: "Manage high-net-worth client leads, conduct property presentations, lead site visits, and close residential sales transactions.",
     responsibilities: [
-      "Engage with qualified high-intent leads generated via Questspaces channels.",
+      "Engage with qualified high-intent leads generated via Quest Spaces channels.",
       "Conduct in-depth requirement profiling and match clients with top 1% properties.",
       "Lead private guided site visits to luxury developments in North & Greater Bengaluru.",
       "Structure deal terms and guide clients through booking and legal documentation."

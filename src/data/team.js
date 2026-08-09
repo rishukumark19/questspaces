@@ -4,7 +4,7 @@ export const FOUNDER = {
   experience: "12+ Years Industry Experience",
   image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=80",
   quote: "Real estate is not about selling square footage; it is about advising human aspirations and securing generational wealth.",
-  bio: "Vivek Anand founded Questspaces in 2024 with a clear mandate: to revolutionize how individuals and corporations navigate property acquisitions in South India. Bringing over 12 years of executive experience across commercial leasing, residential mandates, land acquisition, and strategic investment advisory, Vivek possesses a profound understanding of urban growth dynamics.",
+  bio: "Vivek Anand founded Quest Spaces in 2024 with a clear mandate: to revolutionize how individuals and corporations navigate property acquisitions in South India. Bringing over 12 years of executive experience across commercial leasing, residential mandates, land acquisition, and strategic investment advisory, Vivek possesses a profound understanding of urban growth dynamics.",
   expertise: [
     "Commercial & High-End Residential Mandates",
     "Micro-Market Valuation & Feasibility Analysis",

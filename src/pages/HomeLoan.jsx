@@ -115,12 +115,12 @@ export default function HomeLoan({ onOpenVIPModal }) {
         </div>
       </section>
 
-      {/* Why Choose QuestSpaces Finance (Bento Grid) */}
+      {/* Why Choose Quest Spaces Finance (Bento Grid) */}
       <section className="py-section-gap max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
         <div className="text-center mb-16">
           <span className="text-[11px] tracking-[0.2em] font-bold text-secondary uppercase block mb-2">our advantage</span>
           <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4 font-display-lg">
-            Why Choose QuestSpaces Finance?
+            Why Choose Quest Spaces Finance?
           </h2>
           <div className="w-16 h-1 bg-gold mx-auto rounded-full" />
         </div>
