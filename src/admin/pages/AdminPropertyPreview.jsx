@@ -1,6 +1,7 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getPropertyById, publishProperty } from '../../lib/properties';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 export default function AdminPropertyPreview() {
   const { id } = useParams();
@@ -66,17 +67,23 @@ export default function AdminPropertyPreview() {
   const amenities = property.amenities || [];
   const proximity = property.proximity || [];
 
+  useDocumentTitle('Preview Property');
+
   return (
     <div>
       {/* Admin Top Sticky Bar */}
       <div className="sticky top-0 z-50 bg-slate-900 text-white px-6 py-3 flex items-center justify-between shadow-md">
-        <div className="flex items-center gap-3">
-          <Link to={`/admin/properties/${id}/edit`} className="text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1">
-            <span className="material-symbols-outlined text-[16px]">arrow_back</span> Back to Editor
+        <div className="flex items-center gap-2">
+          <Link to="/admin/properties" className="text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1">
+            Properties
           </Link>
-          <div className="h-4 w-px bg-slate-700"></div>
+          <span className="material-symbols-outlined text-slate-600 text-[14px]">chevron_right</span>
+          <Link to={`/admin/properties/${id}/edit`} className="text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1">
+            Edit
+          </Link>
+          <span className="material-symbols-outlined text-slate-600 text-[14px]">chevron_right</span>
           <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
-            <span className="material-symbols-outlined text-[16px]">visibility</span> Preview Mode ({property.publish_state})
+            <span className="material-symbols-outlined text-[16px]">visibility</span> Preview ({property.publish_state})
           </span>
         </div>
 

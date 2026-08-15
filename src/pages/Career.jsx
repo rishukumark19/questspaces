@@ -1,13 +1,29 @@
 import React, { useState } from 'react';
 import { CAREERS } from '../data/careers';
+import { submitLead } from '../lib/leads';
 
 export default function Career() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [applied, setApplied] = useState(false);
   const [applicantName, setApplicantName] = useState('');
+  const [applicantEmail, setApplicantEmail] = useState('');
+  const [applicantPhone, setApplicantPhone] = useState('');
 
-  const handleApplySubmit = (e) => {
+  const handleApplySubmit = async (e) => {
     e.preventDefault();
+    if (!selectedJob) return;
+    try {
+      await submitLead({
+        name: applicantName,
+        phone: applicantPhone,
+        email: applicantEmail,
+        propertyTitle: 'Job Application',
+        leadType: 'Career Inquiry',
+        message: `Applying for: ${selectedJob.title} (${selectedJob.department})`
+      });
+    } catch (err) {
+      console.error('Failed to submit career lead:', err);
+    }
     setApplied(true);
   };
 
@@ -75,7 +91,13 @@ export default function Career() {
                 </div>
 
                 <button 
-                  onClick={() => { setSelectedJob(job); setApplied(false); }}
+                  onClick={() => { 
+                    setSelectedJob(job); 
+                    setApplied(false); 
+                    setApplicantName('');
+                    setApplicantEmail('');
+                    setApplicantPhone('');
+                  }}
                   className="w-full bg-primary text-white py-3 font-label-bold text-label-bold uppercase tracking-wider rounded-lg hover:bg-primary-container transition-colors cursor-pointer border-none"
                 >
                   Apply for Position
@@ -100,7 +122,7 @@ export default function Career() {
                     Application Submitted!
                   </h3>
                   <p className="font-body-md text-sm text-on-surface-variant mb-6">
-                    Thank you, {applicantName}. Our recruitment team will review your CV for <strong>{selectedJob.title}</strong> and reach out shortly.
+                    Thank you, <strong className="text-primary">{applicantName}</strong>. Our talent acquisition team will review your application for <strong>{selectedJob.title}</strong> and contact you at <strong>{applicantEmail || applicantPhone}</strong> shortly.
                   </p>
                   <button onClick={() => setSelectedJob(null)} className="w-full bg-primary text-white py-3 rounded-lg font-label-bold text-label-bold uppercase tracking-wider hover:bg-primary-container transition-colors cursor-pointer border-none">
                     Close
@@ -135,7 +157,9 @@ export default function Career() {
                         type="email" 
                         required 
                         className="w-full bg-surface-bright border-b border-outline-variant/50 focus:border-primary-container focus:ring-0 px-0 py-2 font-body-md text-on-surface transition-colors outline-none" 
-                        placeholder="name@domain.com" 
+                        placeholder="name@domain.com"
+                        value={applicantEmail}
+                        onChange={(e) => setApplicantEmail(e.target.value)}
                       />
                     </div>
                     <div>
@@ -144,8 +168,12 @@ export default function Career() {
                         id="applicant-phone"
                         type="tel" 
                         required 
+                        pattern="[0-9+\s\-]{10,15}"
+                        title="Please enter a valid 10 to 15 digit contact number"
                         className="w-full bg-surface-bright border-b border-outline-variant/50 focus:border-primary-container focus:ring-0 px-0 py-2 font-body-md text-on-surface transition-colors outline-none" 
-                        placeholder="+91 98765 43210" 
+                        placeholder="+91 98765 43210"
+                        value={applicantPhone}
+                        onChange={(e) => setApplicantPhone(e.target.value)}
                       />
                     </div>
                     <div>

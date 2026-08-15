@@ -1,13 +1,65 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, MapPin, Phone, Mail } from 'lucide-react';
+import { MapPin, Phone, Mail } from 'lucide-react';
+import { submitLead } from '../lib/leads';
 import logoImg from '../assets/logo.png';
 
 export default function Footer() {
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
+
+  const handleNewsletterSubmit = async (e) => {
+    e.preventDefault();
+    if (!newsletterEmail) return;
+    try {
+      await submitLead({
+        name: 'Newsletter Subscriber',
+        email: newsletterEmail,
+        phone: 'N/A',
+        propertyTitle: 'Newsletter Subscription',
+        leadType: 'Market Updates',
+        message: 'Subscribed to Bengaluru Real Estate Insights'
+      });
+    } catch (err) {
+      console.error('Newsletter submission warning:', err);
+    }
+    setNewsletterSubscribed(true);
+  };
+
   return (
     <footer className="w-full bg-surface-container-lowest border-t border-outline-variant pt-16 pb-[80px] lg:pb-8 mt-auto">
       <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
         
+        {/* Newsletter Section */}
+        <div className="bg-surface-container-low p-6 md:p-8 rounded-2xl border border-outline-variant/30 mb-12 flex flex-col lg:flex-row items-center justify-between gap-6">
+          <div className="max-w-xl text-left">
+            <span className="text-[10px] tracking-[0.2em] font-bold text-secondary uppercase block mb-1">Market Intelligence</span>
+            <h4 className="font-headline-sm text-lg md:text-xl font-bold text-primary mb-1">Get Bengaluru Real Estate Insights</h4>
+            <p className="text-on-surface-variant text-xs md:text-sm">Receive curated off-market opportunities, price trend reports, and infrastructure updates directly in your inbox.</p>
+          </div>
+          <form onSubmit={handleNewsletterSubmit} className="w-full lg:w-auto flex flex-col sm:flex-row gap-2 max-w-md">
+            {newsletterSubscribed ? (
+              <div className="text-xs font-bold text-emerald-600 flex items-center gap-1.5 py-2">
+                <span className="material-symbols-outlined text-sm">check_circle</span> You're subscribed to Quest Spaces Market Intelligence.
+              </div>
+            ) : (
+              <>
+                <input 
+                  type="email" 
+                  required
+                  placeholder="Enter your email..." 
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  className="bg-surface border border-outline-variant/50 rounded-lg px-4 py-2.5 text-xs text-primary outline-none focus:border-primary transition-colors min-w-[240px]"
+                />
+                <button type="submit" className="bg-primary hover:bg-primary-container text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border-none whitespace-nowrap">
+                  Subscribe
+                </button>
+              </>
+            )}
+          </form>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-12">
           
           {/* Column 1: Brand Narrative */}
@@ -37,6 +89,10 @@ export default function Footer() {
               <a href="https://linkedin.com/company/questspaces-private-limited/" target="_blank" rel="noreferrer" aria-label="Follow Quest Spaces on LinkedIn" className="group w-9 h-9 rounded-full bg-surface-container-low flex items-center justify-center text-primary hover:bg-primary transition-colors">
                 <svg width="16" height="16" fill="currentColor" className="group-hover:text-white transition-colors" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.262-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
               </a>
+              {/* YouTube */}
+              <a href="https://youtube.com/@questspaces" target="_blank" rel="noreferrer" aria-label="Follow Quest Spaces on YouTube" className="group w-9 h-9 rounded-full bg-surface-container-low flex items-center justify-center text-primary hover:bg-primary transition-colors">
+                <svg width="16" height="16" fill="currentColor" className="group-hover:text-white transition-colors" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              </a>
             </div>
           </div>
 
@@ -49,6 +105,7 @@ export default function Footer() {
               <li><Link to="/properties" className="hover:text-primary transition-colors">Properties Directory</Link></li>
               <li><Link to="/services" className="hover:text-primary transition-colors">Advisory Services</Link></li>
               <li><Link to="/home-loan" className="hover:text-primary transition-colors">Home Loans & Calculator</Link></li>
+              <li><Link to="/insights" className="hover:text-primary transition-colors">Market Insights</Link></li>
               <li><Link to="/career" className="hover:text-primary transition-colors">Careers</Link></li>
               <li><Link to="/contact" className="hover:text-primary transition-colors">Contact Us</Link></li>
             </ul>

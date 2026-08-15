@@ -1,24 +1,93 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useProperties } from '../hooks/useProperties';
+import { useSEO } from '../hooks/useSEO';
 import { MICROMARKETS } from '../data/micromarkets';
 import PropertyCard from '../components/PropertyCard';
 import PropertyCardSkeleton from '../components/PropertyCardSkeleton';
 import DeveloperStrip from '../components/DeveloperStrip';
 
+const TESTIMONIALS = [
+  {
+    id: 1,
+    text: "The market analysis and guidance provided by Quest Spaces was incredible. They helped me secure an off-market luxury apartment in Hebbal that fits my family perfectly and aligns with my investment goals.",
+    name: "Priya Sharma",
+    title: "Tech Executive & Investor",
+    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=150&auto=format&fit=crop"
+  },
+  {
+    id: 2,
+    text: "I was looking for a high-yield asset in North Bengaluru. The advisory desk mapped out the KIADB tech park corridor and found a plotted development that appreciated 18% in just 10 months.",
+    name: "Vikram Reddy",
+    title: "NRI Investor, Dubai",
+    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=150&auto=format&fit=crop"
+  },
+  {
+    id: 3,
+    text: "Professional, transparent, and extremely knowledgeable about Karnataka RERA norms. They made our transition from Mumbai to Bengaluru completely seamless.",
+    name: "Anjali Desai",
+    title: "First-Time Homebuyer",
+    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=150&auto=format&fit=crop"
+  }
+];
+
 export default function Home({ savedIds, onToggleSave, onOpenVIPModal }) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchBhk, setSearchBhk] = useState('');
+  const [searchBudget, setSearchBudget] = useState('');
   const { properties, loading } = useProperties();
+  const [currentTestimonialIdx, setCurrentTestimonialIdx] = useState(0);
+
+  useSEO({
+    title: 'Home',
+    description: 'Quest Spaces offers premium real estate advisory, ultra-luxury villas, and grade-A commercial properties in Bengaluru.',
+    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop',
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "RealEstateAgent",
+      "name": "Quest Spaces",
+      "image": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+      "description": "Premium real estate advisory in Bengaluru.",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Bengaluru",
+        "addressRegion": "Karnataka",
+        "addressCountry": "IN"
+      }
+    }
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTestimonialIdx(prev => (prev + 1) % TESTIMONIALS.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
     const queryParams = new URLSearchParams();
     if (searchQuery) queryParams.set('search', searchQuery);
+    if (searchBhk) queryParams.set('bhk', searchBhk);
+    if (searchBudget) queryParams.set('budget', searchBudget);
     navigate(`/properties?${queryParams.toString()}`);
   };
 
-  const featuredProperties = (properties || []).filter(p => p && p.featured).slice(0, 3);
+  const featuredProperties = useMemo(() => {
+    return (properties || []).filter(p => p && p.featured).slice(0, 3);
+  }, [properties]);
+
+  const marketsWithCounts = useMemo(() => {
+    return MICROMARKETS.map((market) => {
+      const count = (properties || []).filter(p => 
+        (p.micromarket || '').toLowerCase().includes(market.shortName.toLowerCase()) || 
+        (p.location || '').toLowerCase().includes(market.shortName.toLowerCase())
+      ).length;
+      const countLabel = count > 0 ? `${count} Project${count > 1 ? 's' : ''}` : market.projectCount;
+      return { ...market, count, countLabel };
+    });
+  }, [properties]);
 
   return (
     <div className="bg-surface text-on-surface font-body-md antialiased">
@@ -56,25 +125,47 @@ export default function Home({ savedIds, onToggleSave, onOpenVIPModal }) {
             </p>
 
             {/* Search Bar Floating Container */}
-            <div className="bg-white/95 backdrop-blur-sm p-2 rounded-2xl shadow-xl shadow-black/5 max-w-3xl mb-12 border border-white/50">
-              <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <div className="flex-grow flex items-center gap-3 px-4 py-2">
-                  <svg className="w-5 h-5 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-                    <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-                  </svg>
+            <div className="bg-white/95 backdrop-blur-sm p-3 rounded-2xl shadow-xl shadow-black/5 max-w-4xl mb-12 border border-white/50">
+              <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-surface rounded-lg border border-outline-variant/30 focus-within:border-primary transition-colors">
+                  <span className="material-symbols-outlined text-secondary text-xl shrink-0">search</span>
                   <input 
                     type="text"
-                    placeholder="Search by locality, project, or developer..."
+                    placeholder="Locality, project, or developer..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-transparent border-none focus:ring-0 text-primary placeholder-gray-400 text-base py-1 outline-none"
+                    className="w-full bg-transparent border-none focus:ring-0 text-primary placeholder-gray-400 text-sm outline-none"
                   />
                 </div>
-                <button type="submit" className="bg-primary hover:bg-gray-800 text-white px-8 py-3.5 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors whitespace-nowrap shadow-md border-none cursor-pointer">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-                  </svg>
+                <div className="sm:w-[140px] flex items-center gap-1.5 px-3 py-2 bg-surface rounded-lg border border-outline-variant/30 focus-within:border-primary transition-colors">
+                  <span className="material-symbols-outlined text-secondary text-lg shrink-0">bed</span>
+                  <select 
+                    value={searchBhk}
+                    onChange={(e) => setSearchBhk(e.target.value)}
+                    className="w-full bg-transparent border-none focus:ring-0 text-primary text-sm outline-none cursor-pointer"
+                  >
+                    <option value="">Any BHK</option>
+                    <option value="2 BHK">2 BHK</option>
+                    <option value="3 BHK">3 BHK</option>
+                    <option value="4 BHK">4 BHK</option>
+                    <option value="5+ BHK">5+ BHK</option>
+                  </select>
+                </div>
+                <div className="sm:w-[180px] flex items-center gap-1.5 px-3 py-2 bg-surface rounded-lg border border-outline-variant/30 focus-within:border-primary transition-colors">
+                  <span className="material-symbols-outlined text-secondary text-lg shrink-0">payments</span>
+                  <select 
+                    value={searchBudget}
+                    onChange={(e) => setSearchBudget(e.target.value)}
+                    className="w-full bg-transparent border-none focus:ring-0 text-primary text-sm outline-none cursor-pointer"
+                  >
+                    <option value="">Any Budget</option>
+                    <option value="1Cr-3Cr">₹1 Cr - ₹3 Cr</option>
+                    <option value="3Cr-5Cr">₹3 Cr - ₹5 Cr</option>
+                    <option value="5Cr-10Cr">₹5 Cr - ₹10 Cr</option>
+                    <option value="10Cr+">₹10 Cr+</option>
+                  </select>
+                </div>
+                <button type="submit" className="bg-primary hover:bg-gray-800 text-white px-8 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors whitespace-nowrap shadow-md border-none cursor-pointer h-[42px]">
                   SEARCH
                 </button>
               </form>
@@ -88,9 +179,9 @@ export default function Home({ savedIds, onToggleSave, onOpenVIPModal }) {
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"></path>
                   </svg>
-                  <span className="font-serif text-3xl font-semibold text-primary">15+</span>
+                  <span className="font-serif text-3xl font-semibold text-primary">12+</span>
                 </div>
-                <span className="text-[10px] tracking-widest uppercase text-on-surface-variant font-semibold">Years of Trust</span>
+                <span className="text-[10px] tracking-widest uppercase text-on-surface-variant font-semibold">Years Experience</span>
               </div>
               {/* Divider */}
               <div className="hidden md:block w-px h-12 bg-gray-300"></div>
@@ -107,15 +198,15 @@ export default function Home({ savedIds, onToggleSave, onOpenVIPModal }) {
               {/* Divider */}
               <div className="hidden md:block w-px h-12 bg-gray-300"></div>
               {/* Stat 3 */}
-              <div className="flex flex-col items-center sm:items-start gap-1">
+              <a href="https://www.google.com/maps/search/Quest+Spaces+Bengaluru" target="_blank" rel="noreferrer" className="flex flex-col items-center sm:items-start gap-1 group hover:opacity-80 transition-opacity cursor-pointer text-inherit no-underline">
                 <div className="flex items-center gap-2 text-secondary">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"></path>
                   </svg>
-                  <span className="font-serif text-3xl font-semibold text-primary">4.9</span>
+                  <span className="font-serif text-3xl font-semibold text-primary group-hover:text-secondary transition-colors">4.9</span>
                 </div>
-                <span className="text-[10px] tracking-widest uppercase text-on-surface-variant font-semibold">Google Rating</span>
-              </div>
+                <span className="text-[10px] tracking-widest uppercase text-on-surface-variant font-semibold group-hover:text-primary transition-colors">Google Rating ↗</span>
+              </a>
             </div>
           </div>
         </div>
@@ -162,31 +253,40 @@ export default function Home({ savedIds, onToggleSave, onOpenVIPModal }) {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {MICROMARKETS.map((market) => (
-              <Link 
-                key={market.id} 
-                to={`/properties?location=${market.shortName}`}
-                className="group relative h-[380px] rounded-xl overflow-hidden cursor-pointer block shadow-sm border border-outline-variant/20"
-              >
-                <img 
-                  loading="lazy"
-                  src={market.image} 
-                  alt={market.name} 
-                  className="absolute inset-0 w-full !h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
-                <div className="absolute bottom-0 left-0 w-full p-5 text-left z-10 transition-transform duration-300 group-hover:-translate-y-1">
-                  <h3 className="text-white font-headline-md text-xl font-bold mb-1">{market.shortName}</h3>
-                  <p className="text-white/80 text-xs mb-3 line-clamp-2 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {market.tagline}
-                  </p>
-                  <div className="border-t border-white/20 pt-3 mt-auto">
-                    <span className="text-white/70 text-[10px] uppercase font-semibold">{market.projectCount}</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
+          <div className="relative">
+            {/* Mobile Scroll Hint */}
+            <div className="sm:hidden absolute top-0 right-0 h-[380px] w-16 bg-gradient-to-l from-surface-container-lowest to-transparent pointer-events-none z-10 flex items-center justify-end pr-2">
+              <span className="text-primary/70 font-bold text-[10px] uppercase tracking-widest -rotate-90 origin-right whitespace-nowrap mb-8">Swipe &rarr;</span>
+            </div>
+
+            <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 overflow-x-auto pb-4 sm:pb-0 snap-x snap-mandatory -mx-margin-mobile px-margin-mobile sm:mx-0 sm:px-0 hide-scrollbar">
+              {marketsWithCounts.map((market) => {
+                return (
+                  <Link 
+                    key={market.id} 
+                    to={`/properties?location=${encodeURIComponent(market.shortName)}`}
+                    className="group relative h-[380px] w-[85vw] sm:w-auto shrink-0 snap-center rounded-xl overflow-hidden cursor-pointer block shadow-sm border border-outline-variant/20"
+                  >
+                    <img 
+                      loading="lazy"
+                      src={market.image} 
+                      alt={market.name} 
+                      className="absolute inset-0 w-full !h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                    <div className="absolute bottom-0 left-0 w-full p-5 text-left z-10 transition-transform duration-300 group-hover:-translate-y-1">
+                      <h3 className="text-white font-headline-md text-xl font-bold mb-1">{market.shortName}</h3>
+                      <p className="text-white/80 text-xs mb-3 line-clamp-2 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        {market.tagline}
+                      </p>
+                      <div className="border-t border-white/20 pt-3 mt-auto">
+                        <span className="text-white/70 text-[10px] uppercase font-semibold">{market.countLabel}</span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
@@ -221,6 +321,13 @@ export default function Home({ savedIds, onToggleSave, onOpenVIPModal }) {
               ))
             )}
           </div>
+
+          <div className="mt-12 text-center">
+            <p className="text-on-surface-variant font-medium mb-4">Need help choosing the right property?</p>
+            <button onClick={() => onOpenVIPModal()} className="px-6 py-3 border border-primary text-primary hover:bg-primary hover:text-white transition-colors rounded-lg font-label-bold uppercase tracking-wider text-sm cursor-pointer inline-flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">support_agent</span> Talk to an Advisor
+            </button>
+          </div>
         </div>
       </section>
 
@@ -246,30 +353,46 @@ export default function Home({ savedIds, onToggleSave, onOpenVIPModal }) {
                   <span className="text-sm text-on-surface-variant font-medium"><strong>Infrastructure Boost:</strong> Airport line driving North BLR value.</span>
                 </li>
               </ul>
-              <button onClick={() => navigate('/services')} className="bg-primary text-white px-6 py-3 rounded-lg font-label-bold text-xs uppercase tracking-wider hover:bg-primary-container transition-colors shadow-sm cursor-pointer border-none">
-                Read Market Reports
+              <button onClick={() => navigate('/insights')} className="bg-primary text-white px-6 py-3 rounded-lg font-label-bold text-xs uppercase tracking-wider hover:bg-primary-container transition-colors shadow-sm cursor-pointer border-none">
+                Explore Market Analysis
               </button>
             </div>
 
-            {/* Testimonial Snapshot */}
-            <div className="bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-outline-variant/30 relative">
-              <span className="material-symbols-outlined text-secondary/20 text-6xl absolute top-6 right-6">format_quote</span>
-              <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-6">
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <span key={star} className="material-symbols-outlined text-gold" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                  ))}
-                </div>
-                <p className="font-headline-sm text-lg italic text-on-surface-variant mb-8 leading-relaxed">
-                  "The market analysis and guidance provided by Quest Spaces was incredible. They helped me secure an off-market luxury apartment in Hebbal that fits my family perfectly and aligns with my investment goals."
-                </p>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-primary font-bold text-lg border border-outline-variant/40">
-                    PS
+            {/* Testimonial Snapshot Carousel */}
+            <div className="bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-outline-variant/30 relative h-full flex flex-col justify-center">
+              <span className="material-symbols-outlined text-secondary/10 text-8xl absolute -top-4 right-4 z-0">format_quote</span>
+              <div className="relative z-10 transition-opacity duration-500 min-h-[220px] flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-1.5 mb-6">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <span key={star} className="material-symbols-outlined text-gold text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                    ))}
                   </div>
-                  <div>
-                    <h4 className="font-label-bold text-primary font-bold">Priya Sharma</h4>
-                    <p className="text-xs text-on-surface-variant">Tech Executive & Investor</p>
+                  <p className="font-headline-sm text-lg italic text-on-surface-variant mb-8 leading-relaxed">
+                    "{TESTIMONIALS[currentTestimonialIdx].text}"
+                  </p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <img 
+                      src={TESTIMONIALS[currentTestimonialIdx].image} 
+                      alt={TESTIMONIALS[currentTestimonialIdx].name} 
+                      className="w-12 h-12 rounded-full object-cover border border-outline-variant/40"
+                    />
+                    <div>
+                      <h4 className="font-label-bold text-primary font-bold">{TESTIMONIALS[currentTestimonialIdx].name}</h4>
+                      <p className="text-xs text-on-surface-variant">{TESTIMONIALS[currentTestimonialIdx].title}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1.5">
+                    {TESTIMONIALS.map((_, idx) => (
+                      <button 
+                        key={idx}
+                        onClick={() => setCurrentTestimonialIdx(idx)}
+                        className={`w-2 h-2 rounded-full transition-all cursor-pointer border-none p-0 ${idx === currentTestimonialIdx ? 'bg-primary w-6' : 'bg-outline-variant hover:bg-primary/50'}`}
+                        aria-label={`Go to testimonial ${idx + 1}`}
+                      />
+                    ))}
                   </div>
                 </div>
               </div>

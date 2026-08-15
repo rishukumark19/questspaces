@@ -108,6 +108,8 @@ export default function VIPBookingModal({ isOpen, onClose, propertyTitle }) {
                     id="vip-phone"
                     type="tel" 
                     required 
+                    pattern="[0-9+\s\-]{10,15}"
+                    title="Please enter a valid 10 to 15 digit contact number"
                     className="w-full bg-surface-bright border-b border-outline-variant/50 focus:border-primary-container focus:ring-0 px-0 py-2 font-body-md text-on-surface transition-colors outline-none" 
                     placeholder="+91 98765 43210"
                     value={formData.phone}
@@ -127,28 +129,28 @@ export default function VIPBookingModal({ isOpen, onClose, propertyTitle }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2" htmlFor="vip-location">Preferred Corridor</label>
+                  <label className="block font-label-sm text-[11px] text-on-surface-variant uppercase tracking-widest mb-1.5" htmlFor="vip-location">Corridor</label>
                   <select 
                     id="vip-location"
-                    className="w-full bg-surface border border-outline-variant/50 rounded-lg focus:border-primary-container focus:ring-1 focus:ring-primary-container p-3 font-body-md text-on-surface transition-colors outline-none cursor-pointer"
+                    className="w-full bg-surface border border-outline-variant/50 rounded-lg focus:border-primary-container focus:ring-1 focus:ring-primary-container p-2.5 text-xs font-body-md text-on-surface transition-colors outline-none cursor-pointer"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   >
-                    <option value="Hebbal">Hebbal Airport Corridor</option>
-                    <option value="Yelahanka">Yelahanka Corridor</option>
+                    <option value="Hebbal">Hebbal</option>
+                    <option value="Yelahanka">Yelahanka</option>
                     <option value="Manyata Tech Park">Manyata Tech Park</option>
-                    <option value="Devanahalli">Devanahalli Airport Belt</option>
-                    <option value="Thanisandra">Thanisandra Road</option>
+                    <option value="Devanahalli">Devanahalli</option>
+                    <option value="Thanisandra">Thanisandra</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2" htmlFor="vip-budget">Budget Range</label>
+                  <label className="block font-label-sm text-[11px] text-on-surface-variant uppercase tracking-widest mb-1.5" htmlFor="vip-budget">Budget</label>
                   <select 
                     id="vip-budget"
-                    className="w-full bg-surface border border-outline-variant/50 rounded-lg focus:border-primary-container focus:ring-1 focus:ring-primary-container p-3 font-body-md text-on-surface transition-colors outline-none cursor-pointer"
+                    className="w-full bg-surface border border-outline-variant/50 rounded-lg focus:border-primary-container focus:ring-1 focus:ring-primary-container p-2.5 text-xs font-body-md text-on-surface transition-colors outline-none cursor-pointer"
                     value={formData.budget}
                     onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
                   >
@@ -156,6 +158,21 @@ export default function VIPBookingModal({ isOpen, onClose, propertyTitle }) {
                     <option value="₹2.5 Cr - ₹3.5 Cr">₹2.5 Cr - ₹3.5 Cr</option>
                     <option value="₹3.5 Cr - ₹5 Cr">₹3.5 Cr - ₹5 Cr</option>
                     <option value="₹5 Cr+">₹5 Cr+</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-label-sm text-[11px] text-on-surface-variant uppercase tracking-widest mb-1.5" htmlFor="vip-intent">Advisory Intent</label>
+                  <select 
+                    id="vip-intent"
+                    className="w-full bg-surface border border-outline-variant/50 rounded-lg focus:border-primary-container focus:ring-1 focus:ring-primary-container p-2.5 text-xs font-body-md text-on-surface transition-colors outline-none cursor-pointer"
+                    value={formData.intent}
+                    onChange={(e) => setFormData({ ...formData, intent: e.target.value })}
+                  >
+                    <option value="Buying Residence">Buying Residence</option>
+                    <option value="Investment & ROI">Investment & ROI</option>
+                    <option value="NRI Portfolio Advisory">NRI Advisory</option>
+                    <option value="Site Visit & Brochure">Site Visit / Brochure</option>
                   </select>
                 </div>
               </div>

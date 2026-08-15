@@ -9,7 +9,7 @@ export default function PrivacyPolicy() {
           Privacy Policy & Terms of Service
         </h1>
         <p className="text-xs text-on-surface-variant font-semibold mb-8">
-          Last Updated: August 2026 | Quest Spaces Pvt. Ltd.
+          Last Updated: {new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })} | Quest Spaces Pvt. Ltd.
         </p>
 
         <div className="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/20 shadow-sm space-y-8 text-on-surface-variant leading-relaxed font-body-md text-sm">

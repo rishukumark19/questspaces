@@ -1,4 +1,16 @@
 import supabase from './supabase.js';
+import { PROPERTIES as STATIC_PROPERTIES } from '../data/properties';
+
+// ─────────────────────────────────────────────────────
+// UTILS: Normalize Price
+// ─────────────────────────────────────────────────────
+export function normalizePrice(price) {
+  if (!price) return price;
+  const cleaned = String(price).trim();
+  if (cleaned.startsWith('\u20B9')) return cleaned;
+  const stripped = cleaned.replace(/^[?¿\uFFFD\u003F]+/, '').trim();
+  return `\u20B9${stripped}`;
+}
 
 // ─────────────────────────────────────────────────────
 // PUBLIC: Fetch all published properties (with optional filters)
@@ -39,16 +51,27 @@ export async function getPublishedProperties(filters = {}) {
 // ─────────────────────────────────────────────────────
 // PUBLIC: Fetch a single published property by slug
 // ─────────────────────────────────────────────────────
-export async function getPublishedProperty(slug) {
+export async function getPublishedProperty(slugOrId) {
   if (!supabase) throw new Error('Supabase not configured');
-  const { data, error } = await supabase
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
+
+  let query = supabase
     .from('properties')
     .select('*, property_media(id, public_url, is_cover, display_order, media_type, thumbnail_url)')
-    .eq('slug', slug)
-    .eq('publish_state', 'published')
-    .single();
+    .eq('publish_state', 'published');
 
-  if (error) throw error;
+  if (isUUID) {
+    query = query.eq('id', slugOrId);
+  } else {
+    query = query.eq('slug', slugOrId);
+  }
+
+  const { data, error } = await query.single();
+  if (error) {
+    const found = STATIC_PROPERTIES.find(p => p.slug === slugOrId || p.id === slugOrId);
+    if (found) return found;
+    throw error;
+  }
   return data;
 }
 
@@ -59,7 +82,7 @@ export async function getAllProperties(filters = {}) {
   if (!supabase) throw new Error('Supabase not configured');
   let query = supabase
     .from('properties')
-    .select('id, slug, title, location, starting_price, status, publish_state, featured, cover_image_url, updated_at, property_type')
+    .select('id, slug, title, location, developer, seo_title, starting_price, status, publish_state, featured, cover_image_url, updated_at, property_type')
     .order('updated_at', { ascending: false });
 
   if (filters.publishState && filters.publishState !== 'All') {
@@ -77,18 +100,57 @@ export async function getAllProperties(filters = {}) {
   return data || [];
 }
 
+// Map static camelCase property to Supabase snake_case format for Admin consumption
+export function mapStaticToAdminFormat(staticProp) {
+  if (!staticProp) return null;
+  return {
+    ...staticProp,
+    property_type: staticProp.propertyType,
+    starting_price: staticProp.startingPrice,
+    price_value: staticProp.priceValue,
+    price_per_sqft: staticProp.pricePerSqFt,
+    bhk_options: staticProp.bhkOptions,
+    land_parcel: staticProp.landParcel,
+    total_units: staticProp.totalUnits,
+    tower_height: staticProp.towerHeight,
+    rera_id: staticProp.reraId,
+    rera_portal_url: staticProp.reraPortalUrl,
+    micromarket_label: staticProp.micromarketLabel,
+    long_description: staticProp.longDescription,
+    developer_logo_url: staticProp.developerLogoUrl,
+    developer_experience: staticProp.developerExperience,
+    developer_projects_count: staticProp.developerProjectsCount,
+    developer_description: staticProp.developerDescription,
+    full_address: staticProp.fullAddress,
+    cover_image_url: staticProp.heroImage || staticProp.images?.[0] || '',
+    pricing_matrix: staticProp.pricingMatrix,
+    publish_state: 'published'
+  };
+}
+
 // ─────────────────────────────────────────────────────
 // ADMIN: Fetch single property (any state) by ID
 // ─────────────────────────────────────────────────────
-export async function getPropertyById(id) {
+export async function getPropertyById(idOrSlug) {
   if (!supabase) throw new Error('Supabase not configured');
-  const { data, error } = await supabase
-    .from('properties')
-    .select('*, property_media(id, public_url, is_cover, display_order, media_type, thumbnail_url, storage_path)')
-    .eq('id', id)
-    .single();
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
 
-  if (error) throw error;
+  let query = supabase
+    .from('properties')
+    .select('*, property_media(id, public_url, is_cover, display_order, media_type, thumbnail_url, storage_path)');
+
+  if (isUUID) {
+    query = query.eq('id', idOrSlug);
+  } else {
+    query = query.eq('slug', idOrSlug);
+  }
+
+  const { data, error } = await query.single();
+  if (error) {
+    const found = STATIC_PROPERTIES.find(p => p.id === idOrSlug || p.slug === idOrSlug);
+    if (found) return mapStaticToAdminFormat(found);
+    throw error;
+  }
   return data;
 }
 
@@ -96,9 +158,10 @@ export async function getPropertyById(id) {
 // ADMIN: Create a new property (as draft)
 // ─────────────────────────────────────────────────────
 export async function createProperty(propertyData) {
+  const { property_media, leads_count, id: _id, ...cleanData } = propertyData;
   const { data, error } = await supabase
     .from('properties')
-    .insert([{ ...propertyData, publish_state: 'draft' }])
+    .insert([{ ...cleanData, publish_state: 'draft' }])
     .select()
     .single();
 
@@ -109,13 +172,25 @@ export async function createProperty(propertyData) {
 // ─────────────────────────────────────────────────────
 // ADMIN: Update an existing property
 // ─────────────────────────────────────────────────────
-export async function updateProperty(id, updates) {
-  const { data, error } = await supabase
+export async function updateProperty(idOrSlug, updates) {
+  // Strip joined relational fields and computed counts that don't belong to the properties table
+  const { property_media, leads_count, id: bodyId, ...cleanUpdates } = updates;
+  
+  // Try to use the actual UUID if present in the updates object
+  const targetId = bodyId || idOrSlug;
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId);
+
+  let query = supabase
     .from('properties')
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single();
+    .update({ ...cleanUpdates, updated_at: new Date().toISOString() });
+
+  if (isUUID) {
+    query = query.eq('id', targetId);
+  } else {
+    query = query.eq('slug', targetId);
+  }
+
+  const { data, error } = await query.select().single();
 
   if (error) throw error;
   return data;
@@ -129,12 +204,19 @@ export function validateForPublish(property) {
     { field: 'title', label: 'Property name' },
     { field: 'property_type', label: 'Property type' },
     { field: 'location', label: 'Location' },
+    { field: 'developer', label: 'Developer/Builder' },
     { field: 'starting_price', label: 'Starting price' },
-    { field: 'description', label: 'Description' },
-    { field: 'cover_image_url', label: 'Cover photo' },
+    { field: 'slug', label: 'URL Slug' },
+    { field: 'seo_title', label: 'SEO Title' },
+    { field: 'cover_image_url', label: 'Hero Image' },
   ];
-  const missing = required.filter(r => !property[r.field]).map(r => r.label);
-  return { valid: missing.length === 0, missing };
+  const results = required.map(r => {
+    const val = property[r.field];
+    const isPass = val !== undefined && val !== null && String(val).trim() !== '';
+    return { ...r, isPass };
+  });
+  const missing = results.filter(r => !r.isPass).map(r => r.label);
+  return { valid: missing.length === 0, missing, results };
 }
 
 export async function publishProperty(id, propertyData) {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { submitLead } from '../lib/leads';
 
 export default function HomeLoan({ onOpenVIPModal }) {
   // Calculator State
@@ -31,13 +32,23 @@ export default function HomeLoan({ onOpenVIPModal }) {
     }).format(val);
   };
 
-  const handleCallbackSubmit = (e) => {
+  const handleCallbackSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setFormSubmitted(true);
-    }, 1200);
+    try {
+      await submitLead({
+        name: callbackForm.name,
+        phone: callbackForm.phone,
+        email: callbackForm.email,
+        propertyTitle: 'Home Loan Request',
+        leadType: 'Home Loan Inquiry',
+        message: `Amount: ${loanAmount}, Tenure: ${tenureYears} yrs, Expected Rate: ${interestRate}%`
+      });
+    } catch (err) {
+      console.error('Failed to submit home loan lead:', err);
+    }
+    setIsSubmitting(false);
+    setFormSubmitted(true);
   };
 
   return (
@@ -203,7 +214,7 @@ export default function HomeLoan({ onOpenVIPModal }) {
                   />
                   <div className="flex justify-between text-[11px] text-on-surface-variant/75 mt-2 font-semibold">
                     <span>₹5 Lakhs</span>
-                    <span>₹50 Lakhs</span>
+                    <span>₹5 Crores</span>
                     <span>₹10 Crores</span>
                   </div>
                 </div>
@@ -280,6 +291,14 @@ export default function HomeLoan({ onOpenVIPModal }) {
                   <div style={{ width: `${interestPercent}%` }} className="bg-amber-600 h-full" />
                 </div>
               </div>
+              
+              <div className="mt-8 p-6 bg-surface-container-low rounded-xl border border-outline-variant/30 text-center">
+                <h4 className="font-label-bold text-primary mb-2">Need Help Getting a Loan?</h4>
+                <p className="text-sm text-on-surface-variant mb-4">Our financial experts can help you secure the best interest rates from top banks.</p>
+                <button onClick={() => onOpenVIPModal('Home Loan Query')} className="bg-gold text-primary px-6 py-3 rounded-lg font-label-bold text-sm uppercase tracking-wider hover:bg-[#b89550] transition-colors cursor-pointer w-full sm:w-auto border-none">
+                  Talk to a Loan Expert
+                </button>
+              </div>
             </div>
 
             {/* Right: Callback Form (5 Cols) */}
@@ -323,6 +342,8 @@ export default function HomeLoan({ onOpenVIPModal }) {
                       <input 
                         type="tel"
                         required
+                        pattern="[0-9+\s\-]{10,15}"
+                        title="Please enter a valid 10 to 15 digit contact number"
                         className="w-full bg-white/10 border border-white/20 rounded px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-gold transition-colors" 
                         placeholder="+91 98765 43210"
                         value={callbackForm.phone}

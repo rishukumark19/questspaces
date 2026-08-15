@@ -20,6 +20,7 @@ import About from './pages/About';
 import Services from './pages/Services';
 import ServiceDetail from './pages/ServiceDetail';
 import HomeLoan from './pages/HomeLoan';
+import Insights from './pages/Insights';
 import Career from './pages/Career';
 import Contact from './pages/Contact';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -35,12 +36,40 @@ import AdminPropertyNew from './admin/pages/AdminPropertyNew';
 import AdminPropertyEdit from './admin/pages/AdminPropertyEdit';
 import AdminPropertyPreview from './admin/pages/AdminPropertyPreview';
 import AdminLeads from './admin/pages/AdminLeads';
+import AdminInsights from './admin/pages/AdminInsights';
+import AdminTestimonials from './admin/pages/AdminTestimonials';
 
 // Scroll to top and Title updater helper
+function PageTransition({ children }) {
+  const location = useLocation();
+  const [displayLocation, setDisplayLocation] = useState(location);
+  const [transitionStage, setTransitionStage] = useState('fadeIn');
+
+  useEffect(() => {
+    if (location.pathname !== displayLocation.pathname) {
+      setTransitionStage('fadeOut');
+    }
+  }, [location, displayLocation]);
+
+  return (
+    <div
+      className={`${transitionStage === 'fadeOut' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300 ease-in-out`}
+      onTransitionEnd={() => {
+        if (transitionStage === 'fadeOut') {
+          setDisplayLocation(location);
+          setTransitionStage('fadeIn');
+        }
+      }}
+    >
+      {React.cloneElement(children, { key: displayLocation.pathname })}
+    </div>
+  );
+}
+
 function RouteEffects() {
   const { pathname } = useLocation();
   useEffect(() => {
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     
     // Dynamic Document Title
     const routeTitles = {
@@ -49,6 +78,7 @@ function RouteEffects() {
       '/about': 'About Us | Quest Spaces',
       '/services': 'Our Services | Quest Spaces',
       '/home-loan': 'Home Loan Calculator | Quest Spaces',
+      '/insights': 'Market Insights & Intelligence | Quest Spaces',
       '/career': 'Careers | Quest Spaces',
       '/contact': 'Contact Us | Quest Spaces',
       '/privacy-policy': 'Privacy Policy | Quest Spaces'
@@ -74,8 +104,10 @@ function PublicLayout({ children, savedIds, handleToggleSave, handleRemoveSaved,
         onOpenVIPModal={() => handleOpenVIPModal()}
         onOpenSavedDrawer={() => setIsSavedDrawerOpen(true)}
       />
-      <main style={{ flex: 1 }}>
-        {children}
+      <main className="flex-1 flex flex-col pb-20 lg:pb-0">
+        <PageTransition>
+          {children}
+        </PageTransition>
       </main>
       <Footer />
       <StickyActionables onOpenVIPModal={() => handleOpenVIPModal()} />
@@ -156,6 +188,8 @@ export default function App() {
           <Route path="properties/:id/edit" element={<AdminPropertyEdit />} />
           <Route path="properties/:id/preview" element={<AdminPropertyPreview />} />
           <Route path="leads" element={<AdminLeads />} />
+          <Route path="insights" element={<AdminInsights />} />
+          <Route path="testimonials" element={<AdminTestimonials />} />
         </Route>
 
         {/* Public Routes with Layout */}
@@ -180,6 +214,7 @@ export default function App() {
               <Route path="/services" element={<Services onOpenVIPModal={handleOpenVIPModal} />} />
               <Route path="/services/:slug" element={<ServiceDetail onOpenVIPModal={handleOpenVIPModal} />} />
               <Route path="/home-loan" element={<HomeLoan onOpenVIPModal={handleOpenVIPModal} />} />
+              <Route path="/insights" element={<Insights onOpenVIPModal={handleOpenVIPModal} />} />
               <Route path="/career" element={<Career />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />

@@ -371,3 +371,40 @@ button {
 @keyframes marquee { 0% { transform: translateX(0%); } 100% { transform: translateX(-50%); } }
 .animate-marquee { animation: marquee 30s linear infinite; }
 .animate-marquee:hover { animation-play-state: paused; }
+
+/* ── Print Styles (Brochure Mode) ────────────────────────────────── */
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  /* Hide UI elements that shouldn't be printed */
+  header, footer, nav, button, .sticky-actions, .no-print, [role="dialog"], #vip-modal, #saved-drawer {
+    display: none !important;
+  }
+  
+  /* Reset layout constraints for printing */
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+  
+  /* Ensure images break nicely */
+  img {
+    page-break-inside: avoid;
+    max-width: 100% !important;
+  }
+
+  /* Force background colors and borders in print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Page breaks for clarity */
+  .print-break-before {
+    page-break-before: always;
+  }
+}

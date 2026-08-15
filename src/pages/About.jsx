@@ -43,7 +43,7 @@ export default function About({ onOpenVIPModal }) {
               </p>
               
               <p className="text-base text-on-surface-variant leading-relaxed">
-                We believe that finding the perfect property is more than just a transaction — it’s a journey. Backed by over 15 years of deep real estate experience, our mission has been to simplify the home search process and provide unparalleled support to our clients.
+                We believe that finding the perfect property is more than just a transaction — it’s a journey. Backed by over 12 years of deep real estate expertise and advisory leadership, our mission has been to simplify the home search process and provide unparalleled support to our clients.
               </p>
             </div>
           </div>
@@ -217,7 +217,7 @@ export default function About({ onOpenVIPModal }) {
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
           <div className="text-center mb-16">
             <span className="text-gold font-label-bold text-label-sm uppercase tracking-[0.2em] block">Our Process</span>
-            <h2 className="font-display-lg text-[32px] font-bold mt-4 text-primary font-display-lg">How We Work</h2>
+            <h2 className="font-display-lg text-[32px] font-bold mt-4 text-primary">How We Work</h2>
             <p className="text-on-surface-variant text-base mt-2">End-to-End Assistance throughout your real estate lifecycle.</p>
           </div>
           
@@ -260,6 +260,67 @@ export default function About({ onOpenVIPModal }) {
                 <p className="text-[11px] text-on-surface-variant leading-relaxed">Post-sales assistance for long-term values management.</p>
               </div>
 
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Meet the Team Section */}
+      <section className="py-20 bg-background border-t border-outline-variant/30">
+        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+          <div className="text-center mb-16">
+            <span className="text-gold font-label-bold text-label-sm uppercase tracking-[0.2em] block">Our Leadership</span>
+            <h2 className="font-display-lg text-[32px] font-bold mt-4 text-primary">Meet the Advisory Team</h2>
+            <p className="text-on-surface-variant text-base mt-2 max-w-2xl mx-auto">Backed by decades of collective experience across Bengaluru's premium micro-markets.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Team Member 1 */}
+            <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 overflow-hidden shadow-sm hover:shadow-lg transition-all group">
+              <div className="h-64 overflow-hidden relative">
+                <img 
+                  src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=600&auto=format&fit=crop" 
+                  alt="Arjun Kapoor"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 grayscale group-hover:grayscale-0"
+                />
+              </div>
+              <div className="p-6 text-center border-t border-outline-variant/20">
+                <h3 className="font-bold text-lg text-primary mb-1">Arjun Kapoor</h3>
+                <p className="text-secondary text-xs uppercase tracking-widest font-bold mb-3">Head of Residential Sales</p>
+                <p className="text-xs text-on-surface-variant leading-relaxed">Specializing in ultra-luxury villas and branded residences across North Bengaluru.</p>
+              </div>
+            </div>
+
+            {/* Team Member 2 */}
+            <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 overflow-hidden shadow-sm hover:shadow-lg transition-all group">
+              <div className="h-64 overflow-hidden relative">
+                <img 
+                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600&auto=format&fit=crop" 
+                  alt="Priya Desai"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 grayscale group-hover:grayscale-0"
+                />
+              </div>
+              <div className="p-6 text-center border-t border-outline-variant/20">
+                <h3 className="font-bold text-lg text-primary mb-1">Priya Desai</h3>
+                <p className="text-secondary text-xs uppercase tracking-widest font-bold mb-3">Commercial Director</p>
+                <p className="text-xs text-on-surface-variant leading-relaxed">Expert in Grade-A office spaces, yielding assets, and institutional leasing.</p>
+              </div>
+            </div>
+
+            {/* Team Member 3 */}
+            <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 overflow-hidden shadow-sm hover:shadow-lg transition-all group">
+              <div className="h-64 overflow-hidden relative">
+                <img 
+                  src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=600&auto=format&fit=crop" 
+                  alt="Rahul Verma"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 grayscale group-hover:grayscale-0"
+                />
+              </div>
+              <div className="p-6 text-center border-t border-outline-variant/20">
+                <h3 className="font-bold text-lg text-primary mb-1">Rahul Verma</h3>
+                <p className="text-secondary text-xs uppercase tracking-widest font-bold mb-3">Legal & Compliance Lead</p>
+                <p className="text-xs text-on-surface-variant leading-relaxed">Ensuring airtight RERA compliance, title diligence, and secure transactions.</p>
+              </div>
             </div>
           </div>
         </div>

@@ -9,13 +9,13 @@ const TESTIMONIALS = [
     image: "https://lh3.googleusercontent.com/aida-public/AB6AXuB-nwSX3TCgA0zTHQ-SD8XKMorTKANdqBip1Nj1duYXcrdpse__IgWkJMPViVjJFUzHQhIcvfjaYfsQz7GnGSGLSXCHRjfRYPRisTeyWBO1tGJqB__8ZFAkcuiqgfiidYIywr8Nwci3MYzDRXWeJpp5gjyDFsDDAZAX_cWKpGW1LyBPCxNxyZC1gyHtJ2zmMzkh_8pZ2YROJcShK2KEBGxfv2hnzufQU7sHLO2bpKcKCMoK8LwUC-zgmusvXyZcfsYgjzncvoi3VAKc"
   },
   {
-    quote: "The market analysis and guidance provided by the team was incredible. They helped me secure an off-market villa in Hebbal that fits my family perfectly.",
-    name: "Priya Sharma",
-    role: "Tech Executive",
+    quote: "Quest Spaces' deep micro-market intelligence was invaluable for our portfolio diversification in North Bengaluru. Their transparent guidance saved us time and capital.",
+    name: "Vikram & Ananya Sengupta",
+    role: "NRI Tech Investors",
     image: "https://lh3.googleusercontent.com/aida-public/AB6AXuD8fxZFpDWvdp-GIzlQXWU11J9g7ROACX3IEQVbeJcTpt05OOjxPwHq4oAUtmozNQM1zaPpEQ-n6znLar-kfo-2jIfDE7BbKZ1mQ5dWd4QmONVsp2uddwV1WiRX9quLU8I-jMlk988a3O3Wp72EnT9wT_8g2bnF6jzXAOkshietCheOYFQp-DbBjw7FctOnfLulE-ItwlFSBqJSVNd7pafzx-qN2jQnh8FaE2e8hat916cLoEr71Xh9NAN0VqJz36nWzyFUIM3cQJ3R"
   },
   {
-    quote: "Quest Spaces made the home loan and paperwork process absolutely seamless. We couldn't be happier with our new home in Whitefield.",
+    quote: "Quest Spaces made the home loan and paperwork process absolutely seamless. We couldn't be happier with our new home in Bengaluru.",
     name: "Michael & Sarah",
     role: "Homeowners",
     image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBtZAiy3mUVtNO9awyqZ2X4QFd4yxQH8dTf7hcZ1tFjovQttfRzqcyNUWbHtskVMP2GsJ5z-GWWXFtzFdM5DzLtJpkuSTGMD74dsJ3zIXQPjlvpvpyQQ1NxrTqviRnK9_MMS1NtyQt4-EDQrvekIQspSMI4smA2SVcXy9JVfTIKwa6tLormiRF9CqJ7jKrRvgAkAtNIs2-b2dvJr3FXpkBwCEKDck1RGKoycPBtlXet-neGLcsuedzBN9zGZdGKVhKUz0wjIfxn5d9d"
@@ -71,7 +71,7 @@ export default function Services({ onOpenVIPModal }) {
               />
               <div className="absolute bottom-4 left-6 z-20 flex items-center gap-3">
                  <span className="material-symbols-outlined text-white text-3xl p-2 bg-white/20 backdrop-blur-md rounded-lg" style={{ fontVariationSettings: "'FILL' 1" }}>real_estate_agent</span>
-                 <h2 className="text-2xl font-bold text-white tracking-wide">Buying & Selling</h2>
+                 <h2 className="text-2xl font-bold text-white tracking-wide">Buying & Selling Advisory</h2>
               </div>
             </div>
             <div className="p-8 flex-1 flex flex-col justify-between bg-surface">
@@ -94,12 +94,20 @@ export default function Services({ onOpenVIPModal }) {
                   </li>
                 </ul>
               </div>
-              <Link 
-                className="inline-flex items-center gap-2 text-primary font-label-bold text-label-sm group-hover:text-secondary transition-all uppercase tracking-wider font-bold w-fit mt-auto" 
-                to="/properties"
-              >
-                EXPLORE MORE <span className="material-symbols-outlined text-sm group-hover:translate-x-2 transition-transform">arrow_forward</span>
-              </Link>
+              <div className="flex items-center gap-4 flex-wrap mt-auto">
+                <Link 
+                  className="inline-flex items-center gap-2 text-primary font-label-bold text-label-sm group-hover:text-secondary transition-all uppercase tracking-wider font-bold w-fit" 
+                  to="/services/property-buying-selling"
+                >
+                  VIEW METHODOLOGY <span className="material-symbols-outlined text-sm group-hover:translate-x-2 transition-transform">arrow_forward</span>
+                </Link>
+                <Link 
+                  className="text-xs text-on-surface-variant hover:text-primary transition-colors underline font-medium"
+                  to="/properties"
+                >
+                  Browse Listings
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -112,7 +120,7 @@ export default function Services({ onOpenVIPModal }) {
               <div>
                 <div className="flex items-center gap-4 mb-6">
                   <span className="material-symbols-outlined text-[#C5A059] text-4xl p-3 bg-white/10 backdrop-blur-md rounded-xl">finance_chip</span>
-                  <h2 className="text-2xl font-bold text-[#C5A059] tracking-wide">Investment Consultation</h2>
+                  <h2 className="text-2xl font-bold text-[#C5A059] tracking-wide">Investment & Mandate Advisory</h2>
                 </div>
                 <p className="font-body-md text-white/80 mb-6 leading-relaxed">
                   Maximize your returns with our strategic investment advice. We analyze market trends, identify lucrative opportunities, and provide personalized investment plans to help you build and grow your real estate portfolio.
@@ -133,10 +141,10 @@ export default function Services({ onOpenVIPModal }) {
               <div>
                 <div className="flex items-center gap-4 mb-6">
                   <span className="material-symbols-outlined text-primary text-4xl p-3 bg-primary/5 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors duration-300">insights</span>
-                  <h3 className="text-2xl font-bold text-primary tracking-wide">Market Analysis</h3>
+                  <h3 className="text-2xl font-bold text-primary tracking-wide">Market Analysis & Feasibility</h3>
                 </div>
                 <p className="text-on-surface-variant font-body-md leading-relaxed mb-6">
-                  Stay informed with our comprehensive market analysis reports. We provide insights into current market conditions, valuations, and future trends.
+                  Stay informed with our comprehensive market analysis reports. We provide insights into current market conditions, valuations, and future infrastructure trends.
                 </p>
               </div>
               <Link 
@@ -154,17 +162,17 @@ export default function Services({ onOpenVIPModal }) {
               <div>
                 <div className="flex items-center gap-4 mb-6">
                   <span className="material-symbols-outlined text-primary text-4xl p-3 bg-primary/5 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors duration-300">account_balance</span>
-                  <h3 className="text-2xl font-bold text-primary tracking-wide">Home Loan Made Easy</h3>
+                  <h3 className="text-2xl font-bold text-primary tracking-wide">Home Loan & Financing</h3>
                 </div>
                 <p className="text-on-surface-variant font-body-md leading-relaxed mb-6">
-                  Flexible financing options tailored to your needs. Enjoy attractive interest rates, easy EMIs, quick approvals, and minimal paperwork to purchase stress-free.
+                  Flexible financing options tailored to your needs. Enjoy attractive interest rates, easy EMIs, quick approvals, and minimal paperwork through India's premier partner banks.
                 </p>
               </div>
               <Link 
                 className="inline-flex items-center gap-2 text-primary font-label-bold text-label-sm group-hover:text-secondary transition-all uppercase tracking-wider font-bold w-fit mt-auto" 
                 to="/home-loan"
               >
-                Get Started <span className="material-symbols-outlined text-sm group-hover:translate-x-2 transition-transform">arrow_forward</span>
+                Calculate EMI & Apply <span className="material-symbols-outlined text-sm group-hover:translate-x-2 transition-transform">arrow_forward</span>
               </Link>
             </div>
           </div>

@@ -1,10 +1,10 @@
-﻿import React from 'react';
+import React from 'react';
 
 export default function PricingMatrixEditor({ matrix = [], onChange }) {
   const handleAddRow = () => {
     onChange([
       ...matrix,
-      { config: '', carpetArea: '', superArea: '', price: '', availability: 'Available' }
+      { config: '', carpetArea: '', superArea: '', price: '', availability: 'Available', floorPlanImage: '' }
     ]);
   };
 
@@ -23,7 +23,9 @@ export default function PricingMatrixEditor({ matrix = [], onChange }) {
       <div className="flex items-center justify-between">
         <div>
           <h4 className="font-bold text-slate-900 text-sm">Pricing & Configuration Matrix</h4>
-          <p className="text-xs text-slate-500">Detailed breakdown of available unit sizes and prices.</p>
+          <p className="text-xs text-slate-500">
+            Detailed breakdown of unit sizes, prices, and floor plans. Each row renders as a row in the Price List table on the property page.
+          </p>
         </div>
         <button
           type="button"
@@ -35,57 +37,76 @@ export default function PricingMatrixEditor({ matrix = [], onChange }) {
       </div>
 
       {matrix.length === 0 ? (
-        <p className="text-xs text-slate-400 italic">No pricing matrix rows added yet.</p>
+        <p className="text-xs text-slate-400 italic">No pricing matrix rows added yet. Add at least one to populate the Price List and Floor Plans sections on the property page.</p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {matrix.map((row, idx) => (
-            <div key={idx} className="p-4 bg-slate-50 border border-slate-200 rounded-xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
-              <div>
-                <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Config Name</label>
-                <input
-                  type="text"
-                  value={row.config || ''}
-                  onChange={(e) => handleRowChange(idx, 'config', e.target.value)}
-                  placeholder="3 BHK Executive"
-                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary"
-                />
+            <div key={idx} className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+              {/* Row label */}
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Variant #{idx + 1}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveRow(idx)}
+                  className="p-1 text-red-400 hover:bg-red-50 rounded-lg flex items-center gap-1 text-[10px] font-bold"
+                >
+                  <span className="material-symbols-outlined text-[16px]">delete</span> Remove
+                </button>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Carpet Area</label>
-                <input
-                  type="text"
-                  value={row.carpetArea || ''}
-                  onChange={(e) => handleRowChange(idx, 'carpetArea', e.target.value)}
-                  placeholder="1,250 Sq. Ft."
-                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary"
-                />
-              </div>
+              {/* Main fields row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Unit Type</label>
+                  <input
+                    type="text"
+                    value={row.config || ''}
+                    onChange={(e) => handleRowChange(idx, 'config', e.target.value)}
+                    placeholder="3 BHK Executive"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Super Area</label>
-                <input
-                  type="text"
-                  value={row.superArea || ''}
-                  onChange={(e) => handleRowChange(idx, 'superArea', e.target.value)}
-                  placeholder="1,850 Sq. Ft."
-                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary"
-                />
-              </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Carpet Area (sq.ft.)</label>
+                  <input
+                    type="text"
+                    value={row.carpetArea || ''}
+                    onChange={(e) => handleRowChange(idx, 'carpetArea', e.target.value)}
+                    placeholder="1,250 Sq. Ft."
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Price</label>
-                <input
-                  type="text"
-                  value={row.price || ''}
-                  onChange={(e) => handleRowChange(idx, 'price', e.target.value)}
-                  placeholder="₹3.32 Cr*"
-                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary"
-                />
-              </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Built-up Area (sq.ft.)</label>
+                  <input
+                    type="text"
+                    value={row.superArea || ''}
+                    onChange={(e) => handleRowChange(idx, 'superArea', e.target.value)}
+                    placeholder="1,850 Sq. Ft."
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary"
+                  />
+                </div>
 
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Price</label>
+                  <input
+                    type="text"
+                    value={row.price || ''}
+                    onChange={(e) => handleRowChange(idx, 'price', e.target.value)}
+                    onBlur={(e) => {
+                      const val = e.target.value.trim();
+                      if (val && !val.startsWith('₹')) {
+                        handleRowChange(idx, 'price', `₹${val.replace(/^[?¿]+/, '')}`);
+                      }
+                    }}
+                    placeholder="₹3.32 Cr*"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
                   <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Availability</label>
                   <select
                     value={row.availability || 'Available'}
@@ -98,13 +119,36 @@ export default function PricingMatrixEditor({ matrix = [], onChange }) {
                     <option value="Sold Out">Sold Out</option>
                   </select>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveRow(idx)}
-                  className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"
-                >
-                  <span className="material-symbols-outlined text-[18px]">delete</span>
-                </button>
+              </div>
+
+              {/* Floor Plan Image — NEW */}
+              <div className="border-t border-slate-200 pt-3">
+                <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px] text-primary">architecture</span>
+                  Floor Plan Image URL (for this unit type)
+                </label>
+                <div className="flex gap-3 items-start">
+                  <input
+                    type="url"
+                    value={row.floorPlanImage || ''}
+                    onChange={(e) => handleRowChange(idx, 'floorPlanImage', e.target.value)}
+                    placeholder="https://... paste image URL for this BHK floor plan"
+                    className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary"
+                  />
+                  {row.floorPlanImage && (
+                    <div className="w-16 h-12 rounded-lg overflow-hidden border border-slate-200 shrink-0">
+                      <img
+                        src={row.floorPlanImage}
+                        alt="Floor plan preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    </div>
+                  )}
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  This image will appear in the Floor Plans tab for "{row.config || 'this unit type'}" on the property page.
+                </p>
               </div>
             </div>
           ))}

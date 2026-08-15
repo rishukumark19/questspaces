@@ -1,5 +1,5 @@
-﻿import { useState, useEffect } from 'react';
-import { getPublishedProperties } from '../lib/properties';
+import { useState, useEffect } from 'react';
+import { getPublishedProperties, normalizePrice } from '../lib/properties';
 import { PROPERTIES as STATIC_PROPERTIES } from '../data/properties';
 
 export function useProperties(filters = {}) {
@@ -22,9 +22,9 @@ export function useProperties(filters = {}) {
             images: p.property_media && p.property_media.length > 0 
               ? p.property_media.map(m => m.public_url)
               : [p.cover_image_url || ''],
-            startingPrice: p.starting_price,
+            startingPrice: normalizePrice(p.starting_price),
             priceValue: p.price_value,
-            pricePerSqFt: p.price_per_sqft,
+            pricePerSqFt: normalizePrice(p.price_per_sqft),
             bhkOptions: p.bhk_options || [],
             landParcel: p.land_parcel,
             totalUnits: p.total_units,
@@ -33,7 +33,15 @@ export function useProperties(filters = {}) {
             micromarketLabel: p.micromarket_label,
             propertyType: p.property_type,
             longDescription: p.long_description,
-            pricingMatrix: p.pricing_matrix || [],
+            developerLogoUrl: p.developer_logo_url,
+            developerDescription: p.developer_description,
+            developerExperience: p.developer_experience,
+            possession: p.possession || '',
+            configurations: p.configurations || '',
+            pricingMatrix: (p.pricing_matrix || []).map(row => ({
+              ...row,
+              price: normalizePrice(row.price)
+            })),
             amenities: p.amenities || [],
             proximity: p.proximity || [],
             badges: p.badges || [],

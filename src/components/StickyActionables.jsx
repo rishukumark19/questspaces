@@ -33,11 +33,12 @@ export default function StickyActionables({ onOpenVIPModal }) {
 
         <button 
           onClick={onOpenVIPModal}
-          className="flex-1 bg-gold text-primary border-none py-3 rounded-lg flex items-center justify-center transition-colors cursor-pointer"
-          title="VIP Booking"
+          className="flex-1 bg-gold text-primary border-none py-3 rounded-lg flex items-center justify-center gap-1 transition-colors cursor-pointer"
+          title="Request Callback"
           aria-label="Book a VIP consultation callback"
         >
-          <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
+          <span className="material-symbols-outlined text-lg">phone_callback</span>
+          <span className="font-label-bold text-[11px] uppercase tracking-wider hidden sm:inline">Callback</span>
         </button>
       </div>
 
@@ -48,31 +49,37 @@ export default function StickyActionables({ onOpenVIPModal }) {
           href="https://wa.me/917411736908?text=Hello%20Questspaces%20Team%2C%20I%20am%20interested%20in%20learning%20more%20about%20your%20Bengaluru%20properties."
           target="_blank"
           rel="noreferrer"
-          className="bg-surface-container-lowest border border-outline-variant/30 text-[#25D366] hover:bg-[#25D366] hover:text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all"
-          title="Chat on WhatsApp"
+          className="group relative bg-surface-container-lowest border border-outline-variant/30 text-[#25D366] hover:bg-[#25D366] hover:text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all"
           aria-label="Chat with us on WhatsApp"
         >
           <WhatsAppIcon />
+          <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-surface-container-high text-on-surface text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-sm border border-outline-variant/20">
+            Chat on WhatsApp
+          </span>
         </a>
 
         {/* Call Action */}
         <a 
           href="tel:+917411736908"
-          className="bg-surface-container-lowest border border-outline-variant/30 text-primary w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
-          title="Call Advisory"
+          className="group relative bg-surface-container-lowest border border-outline-variant/30 text-primary w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
           aria-label="Call our support team"
         >
           <span className="material-symbols-outlined text-xl text-secondary">phone_in_talk</span>
+          <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-surface-container-high text-on-surface text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-sm border border-outline-variant/20">
+            Call Advisory
+          </span>
         </a>
 
         {/* Quick VIP Inquiry */}
         <button 
           onClick={onOpenVIPModal}
-          className="bg-gold text-primary border-none w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform cursor-pointer"
-          title="Quick VIP Booking"
-          aria-label="Book a VIP consultation callback"
+          className="group relative bg-gold text-primary border-none w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform cursor-pointer"
+          aria-label="Book a consultation callback"
         >
-          <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
+          <span className="material-symbols-outlined text-xl">phone_callback</span>
+          <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-surface-container-high text-on-surface text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-sm border border-outline-variant/20">
+            Request Callback
+          </span>
         </button>
       </div>
     </>

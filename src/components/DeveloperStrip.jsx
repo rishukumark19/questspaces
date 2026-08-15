@@ -3,7 +3,7 @@ import { DEVELOPERS } from '../data/micromarkets';
 
 export default function DeveloperStrip() {
   // Duplicate array for seamless infinite scroll
-  const duplicatedDevelopers = [...DEVELOPERS, ...DEVELOPERS, ...DEVELOPERS];
+  const duplicatedDevelopers = [...DEVELOPERS, ...DEVELOPERS];
 
   return (
     <section className="py-20 bg-surface-container-lowest border-y border-outline-variant/30 overflow-hidden">

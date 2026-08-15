@@ -1,193 +1,214 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { createProperty, updateProperty, publishProperty, generateSlug } from '../../lib/properties';
-import BasicInfoSection from '../components/PropertyForm/BasicInfoSection';
-import LocationSection from '../components/PropertyForm/LocationSection';
-import DetailsSection from '../components/PropertyForm/DetailsSection';
-import AmenitiesSection from '../components/PropertyForm/AmenitiesSection';
-import MediaSection from '../components/PropertyForm/MediaSection';
-import PublishSection from '../components/PropertyForm/PublishSection';
+import { createProperty, generateSlug } from '../../lib/properties';
+import { useToast } from '../hooks/useToast';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 export default function AdminPropertyNew() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('basic');
+  const toast = useToast();
   const [isSaving, setIsSaving] = useState(false);
-  const [propertyId, setPropertyId] = useState(null);
+
+  // Pre-fill template for new properties
+  const defaultDescription = "A premium [configuration] residence by [developer] in [location], offering [main value proposition] from [price].";
+  const defaultLongDescription = "Experience unparalleled luxury at [Property Name]. Located in the heart of [Location], this project offers world-class amenities including a modern clubhouse, landscaped gardens, and smart home features. Designed for the elite, it perfectly blends comfort and elegance.";
 
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
-    developer: '',
+    developer: '', // will be filled in Step 1
+    location: '', // will be filled in Step 1
     property_type: 'Luxury Apartment',
-    status: 'New Launch',
-    publish_state: 'draft',
-    featured: false,
-    description: '',
-    long_description: '',
-    configurations: '',
-    bhk_options: ['3 BHK'],
-    highlights: [],
-    badges: [],
     starting_price: '',
-    price_value: 0,
-    price_per_sqft: '',
-    land_parcel: '',
-    total_units: 0,
-    possession: '',
-    tower_height: '',
-    rera_id: '',
-    micromarket: '',
-    micromarket_label: '',
-    location: '',
-    full_address: '',
-    cover_image_url: null,
-    pricing_matrix: [],
-    amenities: [],
-    proximity: [],
+    description: defaultDescription,
+    long_description: defaultLongDescription,
+    publish_state: 'draft',
+    status: 'New Launch',
+    featured: false,
+    bhk_options: ['3 BHK'],
+    highlights: ["Near [landmark]", "Possession [date]", "RERA registered", "Clubhouse / pool / fitness centre"],
+    badges: [],
   });
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (formData.title || formData.developer || formData.location) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [formData.title, formData.developer, formData.location]);
+
+  // Load draft on mount
+  useEffect(() => {
+    const draft = localStorage.getItem('property_form_draft_new');
+    if (draft) {
+      try {
+        const parsed = JSON.parse(draft);
+        if (parsed && Object.keys(parsed).length > 0) {
+          setFormData(parsed);
+          setTimeout(() => toast.success("Recovered unsaved draft!"), 500);
+        }
+      } catch (e) {
+        console.error('Failed to parse draft', e);
+      }
+    }
+  }, []);
+
+  // Auto-save every 30 seconds
+  useEffect(() => {
+    if (formData.title || formData.developer || formData.location) {
+      const interval = setInterval(() => {
+        localStorage.setItem('property_form_draft_new', JSON.stringify(formData));
+      }, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [formData]);
 
   const handleChange = (field, value) => {
     setFormData((prev) => {
       const updated = { ...prev, [field]: value };
-      if (field === 'title' && (!prev.slug || prev.slug === generateSlug(prev.title))) {
+      if (field === 'title') {
         updated.slug = generateSlug(value);
       }
+      
+      if (['title', 'property_type'].includes(field)) {
+        if (!prev.seo_title) {
+          const titlePart = updated.title || '';
+          const typePart = updated.property_type || '';
+          updated.seo_title = [titlePart, typePart].filter(Boolean).join(' | ');
+        }
+      }
+
       return updated;
     });
   };
 
-  const handleSaveDraft = async () => {
+  const handleCreateDraft = async (e) => {
+    e.preventDefault();
+    if (!formData.title || !formData.property_type || !formData.starting_price) {
+      toast.error("Please fill in all core fields to create a draft.");
+      return;
+    }
+
     setIsSaving(true);
     try {
-      if (propertyId) {
-        await updateProperty(propertyId, { ...formData, publish_state: 'draft' });
-        alert('Draft saved successfully!');
-      } else {
-        const created = await createProperty(formData);
-        setPropertyId(created.id);
-        alert('Property created as draft! You can now upload media.');
-      }
+      const created = await createProperty(formData);
+      localStorage.removeItem('property_form_draft_new');
+      toast.success("Draft created successfully!");
+      navigate(`/admin/properties/${created.id}/edit`);
     } catch (err) {
-      alert(err.message || 'Error saving property draft');
-    } finally {
+      toast.error(err.message || 'Error creating property draft');
       setIsSaving(false);
     }
   };
 
-  const handlePublish = async () => {
-    setIsSaving(true);
-    try {
-      let targetId = propertyId;
-      if (!targetId) {
-        const created = await createProperty(formData);
-        targetId = created.id;
-        setPropertyId(targetId);
-      }
-      await publishProperty(targetId, formData);
-      alert('Property published successfully!');
-      navigate('/admin/properties');
-    } catch (err) {
-      alert(err.message || 'Error publishing property');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const propertyTypes = ['Luxury Apartment', 'Modern Villa', 'Row House', 'Investment Plot'];
 
-  const tabs = [
-    { id: 'basic', label: 'Basic Info', icon: 'info' },
-    { id: 'location', label: 'Location', icon: 'location_on' },
-    { id: 'details', label: 'Specs & Price', icon: 'sell' },
-    { id: 'amenities', label: 'Amenities & Matrix', icon: 'pool' },
-    { id: 'media', label: 'Photos & Media', icon: 'image' },
-    { id: 'publish', label: 'Publishing', icon: 'publish' },
-  ];
+  useDocumentTitle('New Property');
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      {/* Top Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <Link to="/admin/properties" className="text-xs font-bold text-slate-500 hover:text-primary flex items-center gap-1 mb-1">
-            <span className="material-symbols-outlined text-[16px]">arrow_back</span> Back to Properties
+    <div className="p-8 max-w-2xl mx-auto font-body-md min-h-[calc(100vh-4rem)] flex flex-col justify-center">
+      
+      <div className="mb-8 text-center">
+        <div className="inline-flex items-center justify-center gap-2 text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full mb-4">
+          <Link to="/admin/properties" className="hover:text-primary transition-colors flex items-center gap-1">
+            Properties
           </Link>
-          <h1 className="font-headline-md font-bold text-3xl text-primary">Add New Property</h1>
+          <span className="material-symbols-outlined text-[14px] text-slate-400">chevron_right</span>
+          <span className="text-slate-900 font-extrabold">New Property</span>
         </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            disabled={isSaving}
-            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors disabled:opacity-50"
-          >
-            {isSaving ? 'Saving...' : 'Save Draft'}
-          </button>
+        <div className="flex justify-center mb-3">
+          <div className="w-14 h-14 bg-primary text-gold rounded-2xl flex items-center justify-center shadow-md">
+            <span className="material-symbols-outlined text-3xl">real_estate_agent</span>
+          </div>
         </div>
+        <h1 className="font-headline-md font-bold text-3xl text-slate-900 mb-2">Create New Property</h1>
+        <p className="text-sm text-slate-600 font-medium">Let's start with the basics. You'll add full details in the next step.</p>
       </div>
 
-      {/* Tabs Header */}
-      <div className="bg-white rounded-2xl p-2 shadow-sm border border-outline-variant/30 mb-6 flex overflow-x-auto gap-1">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-label-bold text-xs whitespace-nowrap transition-colors ${
-              activeTab === tab.id
-                ? 'bg-primary text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
+        <form onSubmit={handleCreateDraft} className="space-y-6">
+          
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+              Property Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.title}
+              onChange={(e) => handleChange('title', e.target.value)}
+              placeholder="e.g. L&T Realty Elara Celestia"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all"
+            />
+          </div>
 
-      {/* Tab Contents */}
-      <div className="bg-white rounded-2xl p-8 shadow-sm border border-outline-variant/30">
-        {activeTab === 'basic' && (
-          <BasicInfoSection
-            formData={formData}
-            onChange={handleChange}
-            onHighlightsChange={(h) => handleChange('highlights', h)}
-            onBadgesChange={(b) => handleChange('badges', b)}
-          />
-        )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                Property Type <span className="text-red-500">*</span>
+              </label>
+              <select
+                required
+                value={formData.property_type}
+                onChange={(e) => handleChange('property_type', e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all"
+              >
+                {propertyTypes.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
 
-        {activeTab === 'location' && (
-          <LocationSection formData={formData} onChange={handleChange} />
-        )}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                Starting Price <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                <input
+                  type="text"
+                  required
+                  value={formData.starting_price}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    if (val && !val.startsWith('₹')) val = '₹' + val;
+                    handleChange('starting_price', val);
+                  }}
+                  placeholder="3.32 Cr*"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-4 py-3 text-sm outline-none focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all font-semibold text-slate-800"
+                />
+              </div>
+            </div>
+          </div>
 
-        {activeTab === 'details' && (
-          <DetailsSection
-            formData={formData}
-            onChange={handleChange}
-            onBhkOptionsChange={(bhk) => handleChange('bhk_options', bhk)}
-          />
-        )}
+          <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
+            <p className="text-xs text-slate-400 max-w-xs">
+              A hidden draft will be created immediately.
+            </p>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="px-8 py-3 bg-[#C5A059] hover:bg-[#D8B56F] hover:scale-95 text-black font-extrabold text-sm rounded-lg shadow-sm transition-all duration-150 active:scale-95 disabled:opacity-50 flex items-center gap-2 group cursor-pointer border-none"
+            >
+              {isSaving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-black font-extrabold">Creating...</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-black font-extrabold">Create Draft & Continue</span>
+                  <span className="material-symbols-outlined text-[18px] text-black group-hover:translate-x-1 transition-transform font-bold">arrow_forward</span>
+                </>
+              )}
+            </button>
+          </div>
 
-        {activeTab === 'amenities' && (
-          <AmenitiesSection formData={formData} onChange={handleChange} />
-        )}
-
-        {activeTab === 'media' && (
-          <MediaSection
-            propertyId={propertyId}
-            coverImageUrl={formData.cover_image_url}
-            onCoverChange={() => {}}
-          />
-        )}
-
-        {activeTab === 'publish' && (
-          <PublishSection
-            formData={formData}
-            onChange={handleChange}
-            onSaveDraft={handleSaveDraft}
-            onPublish={handlePublish}
-            isSaving={isSaving}
-          />
-        )}
+        </form>
       </div>
     </div>
   );

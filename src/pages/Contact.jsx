@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { submitLead } from '../lib/leads';
 
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false);
@@ -12,13 +13,23 @@ export default function Contact() {
     message: ''
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmitted(true);
-    }, 1200);
+    try {
+      await submitLead({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        propertyTitle: 'General Contact',
+        leadType: formData.investmentType,
+        message: formData.message
+      });
+    } catch (err) {
+      console.error('Failed to submit contact lead:', err);
+    }
+    setIsSubmitting(false);
+    setSubmitted(true);
   };
 
   return (
@@ -151,6 +162,9 @@ export default function Contact() {
               {submitted ? (
                 <div className="text-center py-12">
                   <span className="material-symbols-outlined text-[56px] text-green-600 mb-4 block" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                  <p className="text-on-surface-variant mb-8 leading-relaxed">
+                    We've received your inquiry. Our advisory team will contact you within 24 hours to discuss your requirements.
+                  </p>
                   <h3 className="text-2xl font-bold text-primary mb-2">
                     Inquiry Sent Successfully!
                   </h3>
@@ -198,6 +212,8 @@ export default function Contact() {
                       id="contact-phone"
                       type="tel" 
                       required 
+                      pattern="[0-9+\s\-]{10,15}"
+                      title="Please enter a valid 10 to 15 digit contact number"
                       className="w-full bg-white border border-outline-variant/40 rounded-lg p-3 font-body-md text-on-surface focus:outline-none focus:border-primary transition-all text-sm"
                       placeholder="+91 98765 43210"
                       value={formData.phone}
@@ -333,7 +349,7 @@ export default function Contact() {
               <ul className="space-y-3 font-body-md text-sm text-on-surface-variant">
                 <li><Link className="hover:text-primary transition-colors" to="/contact">Become a Partner</Link></li>
                 <li><Link className="hover:text-primary transition-colors" to="/career">Career Opportunities</Link></li>
-                <li><Link className="hover:text-primary transition-colors" to="/about">Press & Media</Link></li>
+                <li><a className="hover:text-primary transition-colors" href="mailto:info@questspaces.in?subject=Media%20%26%20Press%20Inquiry">Media & Press Inquiries</a></li>
                 <li><Link className="hover:text-primary transition-colors" to="/privacy-policy">Privacy Policy</Link></li>
               </ul>
             </div>

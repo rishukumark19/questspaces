@@ -58,6 +58,34 @@ export async function updateLeadStatus(id, status) {
   return data;
 }
 
+// Admin: Update lead note
+export async function updateLeadNote(id, note) {
+  if (!supabase) throw new Error('Supabase not configured');
+  const { data, error } = await supabase
+    .from('leads')
+    .update({ note })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// Admin: Update lead priority
+export async function updateLeadPriority(id, is_priority) {
+  if (!supabase) throw new Error('Supabase not configured');
+  const { data, error } = await supabase
+    .from('leads')
+    .update({ is_priority })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 // Admin: Delete lead
 export async function deleteLead(id) {
   if (!supabase) throw new Error('Supabase not configured');
