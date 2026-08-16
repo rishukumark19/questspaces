@@ -9,15 +9,15 @@ export default function CompletionTracker({ formData }) {
       label: '1. Essentials',
       desc: 'Title, developer, type & cover',
       check: () => {
-        return Boolean(formData.title && formData.developer && formData.property_type && formData.starting_price);
+        return Boolean(formData.title && formData.developer && (formData.property_type || formData.propertyType) && (formData.starting_price || formData.price || formData.price_value));
       }
     },
     {
       id: 'location',
       label: '2. Location',
-      desc: 'Address and map coordinates',
+      desc: 'Address and location details',
       check: () => {
-        return Boolean(formData.location && formData.full_address && formData.map_coordinates);
+        return Boolean(formData.location && (formData.full_address || formData.micromarket || formData.location));
       }
     },
     {
@@ -25,7 +25,7 @@ export default function CompletionTracker({ formData }) {
       label: '3. Configurations',
       desc: 'Unit matrix and pricing',
       check: () => {
-        return Boolean((formData.pricing_matrix && formData.pricing_matrix.length > 0) || (formData.bhk_options && formData.bhk_options.length > 0));
+        return Boolean((formData.pricing_matrix && formData.pricing_matrix.length > 0) || (formData.bhk_options && formData.bhk_options.length > 0) || formData.configurations);
       }
     },
     {
@@ -33,7 +33,7 @@ export default function CompletionTracker({ formData }) {
       label: '4. Amenities',
       desc: 'Selected project amenities',
       check: () => {
-        return Boolean(formData.amenities && formData.amenities.length > 0);
+        return Boolean(formData.amenities && formData.amenities.length > 0 && formData.amenities.some(cat => Array.isArray(cat.list) ? cat.list.length > 0 : true));
       }
     },
     {
@@ -41,7 +41,7 @@ export default function CompletionTracker({ formData }) {
       label: '5. Media',
       desc: 'Cover image and photos',
       check: () => {
-        return Boolean(formData.cover_image_url);
+        return Boolean(formData.cover_image_url || formData.heroImage || (formData.property_media && formData.property_media.length > 0) || (formData.images && formData.images.length > 0));
       }
     },
     {
@@ -49,7 +49,7 @@ export default function CompletionTracker({ formData }) {
       label: '6. SEO & Publish',
       desc: 'Meta title and URL slug',
       check: () => {
-        return Boolean(formData.slug && formData.seo_title);
+        return Boolean(formData.slug && (formData.seo_title || formData.title));
       }
     },
   ];

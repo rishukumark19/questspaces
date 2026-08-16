@@ -198,21 +198,41 @@ export default function PropertyDetail({
     }
   };
 
-  const handleNextImage = () => setActiveImageIndex((prev) => (prev + 1) % property.images.length);
-  const handlePrevImage = () => setActiveImageIndex((prev) => (prev - 1 + property.images.length) % property.images.length);
+  const handleNextImage = () => setActiveImageIndex((prev) => (prev + 1) % (property.images?.length || 1));
+  const handlePrevImage = () => setActiveImageIndex((prev) => (prev - 1 + (property.images?.length || 1)) % (property.images?.length || 1));
 
   // ── Proximity category split ──────────────────────────────────────────────
-  const techParks = property.proximity.filter(p =>
-    p.title.toLowerCase().includes('tech') ||
-    p.title.toLowerCase().includes('park') ||
-    p.title.toLowerCase().includes('business')
+  const rawProximity = Array.isArray(property.proximity) ? property.proximity : [];
+  const normalizedProximity = rawProximity.map(p => ({
+    title: p.title || p.landmark || p.name || 'Nearby Landmark',
+    distance: p.distance || p.time || '10 Mins',
+    type: p.type || 'transit'
+  }));
+
+  const techParks = normalizedProximity.filter(p =>
+    (p.title || '').toLowerCase().includes('tech') ||
+    (p.title || '').toLowerCase().includes('park') ||
+    (p.title || '').toLowerCase().includes('business')
   );
-  const healthcare = property.proximity.filter(p =>
-    p.title.toLowerCase().includes('hospital') ||
-    p.title.toLowerCase().includes('aster') ||
-    p.title.toLowerCase().includes('manipal')
+  const healthcare = normalizedProximity.filter(p =>
+    (p.title || '').toLowerCase().includes('hospital') ||
+    (p.title || '').toLowerCase().includes('aster') ||
+    (p.title || '').toLowerCase().includes('manipal') ||
+    (p.title || '').toLowerCase().includes('health')
   );
-  const connectivity = property.proximity.filter(p => !techParks.includes(p) && !healthcare.includes(p));
+  const connectivity = normalizedProximity.filter(p => !techParks.includes(p) && !healthcare.includes(p));
+
+  // ── Amenities normalization ───────────────────────────────────────────────
+  const normalizedAmenities = (property.amenities || []).map(cat => {
+    if (typeof cat === 'string') {
+      return { category: 'Project Amenities', list: [cat] };
+    }
+    return { 
+      category: cat.category || 'Amenities', 
+      list: Array.isArray(cat.list) ? cat.list : (cat.items || []) 
+    };
+  });
+  const totalAmenities = normalizedAmenities.reduce((acc, cat) => acc + (cat.list?.length || 0), 0);
 
   // ── Amenity icon/subtitle ─────────────────────────────────────────────────
   const getIcon = (name) => {
@@ -259,10 +279,6 @@ export default function PropertyDetail({
     if (s.includes('under') || s.includes('construction')) return 'from-amber-500 to-orange-600';
     return 'from-primary to-primary-container';
   };
-
-  // ── All amenity items flattened for count ─────────────────────────────────
-  const allAmenityItems = property.amenities.flatMap(cat => cat.list);
-  const totalAmenities = allAmenityItems.length;
 
   return (
     <div className="bg-surface text-on-surface font-body-md antialiased pb-24">
@@ -996,14 +1012,14 @@ export default function PropertyDetail({
                     World-Class Amenities
                   </h2>
                   <p className="text-sm text-on-surface-variant mt-1">
-                    {totalAmenities} amenities across {property.amenities.length} categories
+                    {totalAmenities} amenities across {normalizedAmenities.length} categories
                   </p>
                 </div>
               </div>
 
-              {property.amenities.length > 0 ? (
+              {normalizedAmenities.length > 0 ? (
                 <div className="space-y-3">
-                  {property.amenities.map((cat, catIdx) => {
+                  {normalizedAmenities.map((cat, catIdx) => {
                     const isCatExpanded = expandedAmenityCategories[catIdx] !== false; // default open
                     return (
                       <div

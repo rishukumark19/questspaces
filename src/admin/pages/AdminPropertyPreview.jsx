@@ -14,9 +14,28 @@ export default function AdminPropertyPreview() {
 
   useDocumentTitle(property ? `Preview: ${property.title}` : 'Preview Property');
 
+  const SESSION_KEY = `qs_edit_snapshot_${id}`;
+
   const fetchProperty = async () => {
     setLoading(true);
     try {
+      // Read the session snapshot written by the edit page — this is always current.
+      // The edit page writes it on every change, on every save, and before navigating here.
+      const snapshot = sessionStorage.getItem(SESSION_KEY);
+      if (snapshot) {
+        try {
+          const parsed = JSON.parse(snapshot);
+          if (parsed && (parsed.id === id || parsed.slug === id)) {
+            setProperty(parsed);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          // Corrupt snapshot — fall through to DB fetch
+        }
+      }
+
+      // No snapshot (e.g. navigated directly to preview URL) — load from DB
       const data = await getPropertyById(id);
       setProperty(data);
     } catch (err) {
@@ -30,6 +49,7 @@ export default function AdminPropertyPreview() {
   useEffect(() => {
     fetchProperty();
   }, [id]);
+
 
   const handlePublish = async () => {
     if (!property) return;

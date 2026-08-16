@@ -2,8 +2,18 @@ import supabase from './supabase.js';
 import { PROPERTIES as STATIC_PROPERTIES } from '../data/properties';
 
 // ─────────────────────────────────────────────────────
-// UTILS: Normalize Price
+// UTILS: Normalize Price & Slug Generator
 // ─────────────────────────────────────────────────────
+export function generateSlug(text) {
+  if (!text) return '';
+  return String(text)
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export function normalizePrice(price) {
   if (!price) return price;
   const cleaned = String(price).trim();
@@ -25,8 +35,16 @@ export function normalizeProperty(p) {
 
   const videoUrl = p.walkthrough_video_url || p.walkthroughVideoUrl || (videoMedia.length > 0 ? videoMedia[0].public_url : '') || '';
 
+  // Sync status fields — form writes to construction_status, PropertyDetail reads status
+  const resolvedStatus = p.status || p.construction_status || '';
+
   return {
     ...p,
+    // Status — sync both fields so PropertyDetail always has property.status
+    status: resolvedStatus,
+    construction_status: resolvedStatus,
+    // Location — always pass through explicitly
+    location: p.location || p.micromarket_label || p.micromarket || '',
     heroImage: coverUrl,
     images: allImages,
     walkthroughVideoUrl: videoUrl,
@@ -143,81 +161,118 @@ export async function getPublishedProperty(slugOrId) {
 export function toAdminProperty(p) {
   if (!p) return null;
   
-  // If this property corresponds to a static property, merge the base static data first!
+  // Find base static property if exists
   const baseStatic = (p.id || p.slug) 
-    ? (STATIC_PROPERTIES.find(sp => sp.id === p.id || sp.slug === p.slug || (p.id === 'dummy-draft-1' && sp.slug === 'godrej-woods') || (p.id === 'dummy-draft-2' && sp.slug === 'prestige-lakeside-habitat')) || {})
+    ? (STATIC_PROPERTIES.find(sp => sp.id === p.id || sp.slug === p.slug || (p.id === 'dummy-draft-1' && sp.slug === 'godrej-woods') || (p.id === 'dummy-draft-2' && sp.slug === 'prestige-lakeside-habitat') || (sp.title && p.title && sp.title.toLowerCase() === p.title.toLowerCase())) || {})
     : {};
 
-  const merged = { ...baseStatic, ...p };
+  // Helper to pick the first valid non-empty value
+  const pick = (...vals) => {
+    for (const v of vals) {
+      if (v !== null && v !== undefined && v !== '') {
+        if (Array.isArray(v)) {
+          if (v.length > 0) return v;
+        } else {
+          return v;
+        }
+      }
+    }
+    return '';
+  };
 
-  const media = merged.property_media || [];
+  const media = (p.property_media && p.property_media.length > 0) ? p.property_media : (baseStatic.property_media || []);
   const imageMedia = media.filter(m => m.media_type !== 'video');
   const videoMedia = media.filter(m => m.media_type === 'video');
 
-  const coverUrl = merged.cover_image_url || (imageMedia.length > 0 ? imageMedia[0].public_url : '') || (merged.images && merged.images[0]) || merged.heroImage || '';
+  const coverUrl = pick(
+    p.cover_image_url,
+    imageMedia[0]?.public_url,
+    p.images?.[0],
+    p.heroImage,
+    baseStatic.cover_image_url,
+    baseStatic.heroImage,
+    baseStatic.images?.[0]
+  );
+
   const allImages = imageMedia.length > 0
     ? imageMedia.map(m => m.public_url)
-    : (merged.images && merged.images.length > 0 ? merged.images : (coverUrl ? [coverUrl] : []));
+    : (p.images && p.images.length > 0 ? p.images : (baseStatic.images && baseStatic.images.length > 0 ? baseStatic.images : (coverUrl ? [coverUrl] : [])));
 
-  const videoUrl = merged.walkthrough_video_url || merged.walkthroughVideoUrl || (videoMedia.length > 0 ? videoMedia[0].public_url : '') || '';
+  const videoUrl = pick(
+    p.walkthrough_video_url,
+    p.walkthroughVideoUrl,
+    videoMedia[0]?.public_url,
+    baseStatic.walkthrough_video_url,
+    baseStatic.walkthroughVideoUrl
+  );
 
-  const shortDesc = merged.description || merged.overview || baseStatic.description || baseStatic.overview || '';
-  const longDesc = merged.long_description || merged.longDescription || merged.description || baseStatic.longDescription || baseStatic.description || '';
-  const constructionStatus = merged.construction_status || merged.status || baseStatic.status || 'Under Construction';
+  const shortDesc = pick(p.description, p.overview, baseStatic.description, baseStatic.overview);
+  const longDesc = pick(p.long_description, p.longDescription, p.description, baseStatic.longDescription, baseStatic.description);
+  const constructionStatus = pick(p.construction_status, p.status, baseStatic.status);
+
+  const bhkOpts = pick(p.bhk_options, p.bhkOptions, baseStatic.bhkOptions);
+  const configs = pick(p.configurations, Array.isArray(bhkOpts) && bhkOpts.length > 0 ? bhkOpts.join(', ') : '', baseStatic.configurations);
+
+  const rawAmenities = pick(p.amenities, baseStatic.amenities);
+  const pricingMatrix = pick(p.pricing_matrix, p.pricingMatrix, baseStatic.pricingMatrix);
+
+  const locationName = pick(p.location, baseStatic.location);
+  const micromarket = pick(p.micromarket, baseStatic.micromarket);
+  const micromarketLabel = pick(p.micromarket_label, p.micromarketLabel, baseStatic.micromarketLabel, micromarket);
 
   return {
-    id: merged.id || '',
-    title: merged.title || baseStatic.title || '',
-    slug: merged.slug || baseStatic.slug || '',
-    developer: merged.developer || baseStatic.developer || '',
-    location: merged.location || baseStatic.location || '',
-    property_type: merged.property_type || merged.propertyType || baseStatic.propertyType || 'Luxury Apartment',
+    id: pick(p.id, baseStatic.id),
+    title: pick(p.title, baseStatic.title),
+    slug: pick(p.slug, baseStatic.slug, p.title ? generateSlug(p.title) : ''),
+    developer: pick(p.developer, baseStatic.developer),
+    location: locationName,
+    property_type: pick(p.property_type, p.propertyType, baseStatic.propertyType),
     status: constructionStatus,
     construction_status: constructionStatus,
-    starting_price: normalizePrice(merged.starting_price || merged.price || baseStatic.price || ''),
-    price_value: merged.price_value || merged.priceValue || baseStatic.priceValue || 0,
-    price_per_sqft: merged.price_per_sqft || merged.pricePerSqFt || baseStatic.pricePerSqFt || '',
-    bhk_options: (merged.bhk_options && merged.bhk_options.length > 0) ? merged.bhk_options : (merged.bhkOptions && merged.bhkOptions.length > 0 ? merged.bhkOptions : (baseStatic.bhkOptions || ['2 BHK', '3 BHK', '4 BHK'])),
-    configurations: merged.configurations || (merged.bhk_options ? merged.bhk_options.join(', ') : (baseStatic.configurations || '')),
-    carpet_area: merged.carpet_area || merged.carpetArea || baseStatic.carpetArea || '1,450 sq.ft.',
-    super_area: merged.super_area || merged.superArea || baseStatic.superArea || '1,890 sq.ft.',
-    land_parcel: merged.land_parcel || merged.landParcel || baseStatic.landParcel || '',
-    total_units: merged.total_units || merged.totalUnits || baseStatic.totalUnits || '',
-    tower_height: merged.tower_height || merged.towerHeight || baseStatic.towerHeight || '',
-    rera_id: merged.rera_id || merged.reraId || baseStatic.reraId || '',
-    rera_portal_url: merged.rera_portal_url || merged.reraPortalUrl || baseStatic.reraPortalUrl || '',
-    micromarket: merged.micromarket || baseStatic.micromarket || '',
-    micromarket_label: merged.micromarket_label || merged.micromarketLabel || baseStatic.micromarketLabel || merged.micromarket || '',
+    starting_price: normalizePrice(pick(p.starting_price, p.price, baseStatic.price)),
+    price_value: pick(p.price_value, p.priceValue, baseStatic.priceValue, 0),
+    price_per_sqft: pick(p.price_per_sqft, p.pricePerSqFt, baseStatic.pricePerSqFt),
+    bhk_options: Array.isArray(bhkOpts) && bhkOpts.length > 0 ? bhkOpts : [],
+    configurations: configs,
+    carpet_area: pick(p.carpet_area, p.carpetArea, baseStatic.carpetArea),
+    super_area: pick(p.super_area, p.superArea, baseStatic.superArea),
+    land_parcel: pick(p.land_parcel, p.landParcel, baseStatic.landParcel),
+    total_units: pick(p.total_units, p.totalUnits, baseStatic.totalUnits),
+    tower_height: pick(p.tower_height, p.towerHeight, baseStatic.towerHeight),
+    rera_id: pick(p.rera_id, p.reraId, baseStatic.reraId),
+    rera_portal_url: pick(p.rera_portal_url, p.reraPortalUrl, baseStatic.reraPortalUrl),
+    micromarket: micromarket,
+    micromarket_label: micromarketLabel,
     overview: shortDesc,
     description: shortDesc,
     long_description: longDesc,
-    full_address: merged.full_address || merged.fullAddress || (merged.location ? `${merged.location}, Bengaluru` : ''),
-    map_coordinates: merged.map_coordinates || merged.mapCoordinates || '13.0358, 77.5970',
-    developer_logo_url: merged.developer_logo_url || merged.developerLogoUrl || baseStatic.developerLogoUrl || '',
-    developer_experience: merged.developer_experience || merged.developerExperience || baseStatic.developerExperience || '25+ Years',
-    developer_projects_count: merged.developer_projects_count || merged.developerProjectsCount || baseStatic.developerProjectsCount || '40+ Projects',
-    developer_description: merged.developer_description || merged.developerDescription || baseStatic.developerDescription || '',
-    brochure_url: merged.brochure_url || merged.brochureUrl || baseStatic.brochureUrl || '',
-    master_plan_image_url: merged.master_plan_image_url || merged.masterPlanImageUrl || baseStatic.masterPlanImageUrl || '',
+    full_address: pick(p.full_address, p.fullAddress, baseStatic.full_address),
+    map_coordinates: pick(p.map_coordinates, p.mapCoordinates, baseStatic.map_coordinates),
+    developer_logo_url: pick(p.developer_logo_url, p.developerLogoUrl, baseStatic.developerLogoUrl),
+    developer_experience: pick(p.developer_experience, p.developerExperience, baseStatic.developerExperience),
+    developer_projects_count: pick(p.developer_projects_count, p.developerProjectsCount, baseStatic.developerProjectsCount),
+    developer_description: pick(p.developer_description, p.developerDescription, baseStatic.developerDescription),
+    brochure_url: pick(p.brochure_url, p.brochureUrl, baseStatic.brochureUrl),
+    master_plan_image_url: pick(p.master_plan_image_url, p.masterPlanImageUrl, baseStatic.masterPlanImageUrl),
     walkthrough_video_url: videoUrl,
     cover_image_url: coverUrl,
-    pricing_matrix: (merged.pricing_matrix && merged.pricing_matrix.length > 0) ? merged.pricing_matrix : (baseStatic.pricingMatrix || []),
-    amenities: (merged.amenities && merged.amenities.length > 0) ? merged.amenities : (baseStatic.amenities || []),
-    proximity: (merged.proximity && merged.proximity.length > 0) ? merged.proximity : (baseStatic.proximity || []),
-    badges: (merged.badges && merged.badges.length > 0) ? merged.badges : (baseStatic.badges || []),
-    highlights: (merged.highlights && merged.highlights.length > 0) ? merged.highlights : (baseStatic.highlights || []),
-    recent_updates: (merged.recent_updates && merged.recent_updates.length > 0) ? merged.recent_updates : (baseStatic.recentUpdates || []),
-    specifications: (merged.specifications && merged.specifications.length > 0) ? merged.specifications : (baseStatic.specifications || []),
-    price_insights: (merged.price_insights && merged.price_insights.length > 0) ? merged.price_insights : (baseStatic.priceInsights || []),
-    buyer_personas: (merged.buyer_personas && merged.buyer_personas.length > 0) ? merged.buyer_personas : (baseStatic.buyerPersonas || []),
-    floor_plans: (merged.floor_plans && merged.floor_plans.length > 0) ? merged.floor_plans : (baseStatic.floorPlans || []),
-    publish_state: merged.publish_state || 'draft',
-    featured: merged.featured ?? false,
-    seo_title: merged.seo_title || (merged.title ? `${merged.title} | Luxury Real Estate` : ''),
-    seo_description: merged.seo_description || shortDesc || '',
-    seo_keywords: merged.seo_keywords || '',
-    created_at: merged.created_at || new Date().toISOString(),
-    updated_at: merged.updated_at || new Date().toISOString(),
+    pricing_matrix: pricingMatrix || [],
+    amenities: rawAmenities || [],
+    proximity: pick(p.proximity, baseStatic.proximity) || [],
+    badges: pick(p.badges, baseStatic.badges) || [],
+    highlights: pick(p.highlights, baseStatic.highlights) || [],
+    recent_updates: pick(p.recent_updates, p.recentUpdates, baseStatic.recentUpdates) || [],
+    specifications: pick(p.specifications, baseStatic.specifications) || [],
+    price_insights: pick(p.price_insights, p.priceInsights, baseStatic.priceInsights) || [],
+    buyer_personas: pick(p.buyer_personas, p.buyerPersonas, baseStatic.buyerPersonas) || [],
+    floor_plans: pick(p.floor_plans, p.floorPlans, baseStatic.floorPlans) || [],
+    publish_state: pick(p.publish_state, 'draft'),
+    featured: Boolean(p.featured ?? baseStatic.featured ?? false),
+    seo_title: pick(p.seo_title, baseStatic.seo_title),
+    seo_description: pick(p.seo_description, shortDesc),
+    seo_keywords: pick(p.seo_keywords, baseStatic.seo_keywords),
+    created_at: pick(p.created_at, new Date().toISOString()),
+    updated_at: pick(p.updated_at, new Date().toISOString()),
     property_media: media.length > 0 ? media : allImages.map((img, i) => ({ id: `img-${i}`, public_url: img, media_type: 'image', is_cover: i === 0, display_order: i }))
   };
 }
@@ -471,62 +526,75 @@ export async function unpublishProperty(id) {
 }
 
 // ─────────────────────────────────────────────────────
-// ADMIN: Duplicate an existing property as a draft
-// ─────────────────────────────────────────────────────
-export async function duplicateProperty(id) {
-  if (!supabase) throw new Error('Supabase is not configured.');
-
-  const original = await getPropertyById(id);
-  if (!original) throw new Error('Original property not found');
-
-  const newTitle = `${original.title} (Copy)`;
-  const newSlug = generateSlug(`${original.slug}-copy-${Date.now().toString().slice(-4)}`);
-
-  const { id: _oldId, created_at: _c, updated_at: _u, property_media: _m, ...cleanData } = original;
-
-  const duplicatedData = {
-    ...cleanData,
-    title: newTitle,
-    slug: newSlug,
-    publish_state: 'draft',
-    featured: false,
-  };
-
-  const { data, error } = await supabase
-    .from('properties')
-    .insert([duplicatedData])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Supabase duplicateProperty error:', error);
-    throw new Error(error.message || 'Failed to duplicate property');
-  }
-  
-  const cache = getLocalCache();
-  cache.unshift({ ...data });
-  saveLocalCache(cache);
-  return data;
-}
-
-// ─────────────────────────────────────────────────────
 // ADMIN: Delete property (hard delete - media cascades via FK)
 // ─────────────────────────────────────────────────────
 export async function deleteProperty(id) {
-  if (!supabase) throw new Error('Supabase is not configured.');
-
-  const { error } = await supabase.from('properties').delete().eq('id', id);
-  if (error) {
-    console.error('Supabase delete error:', error);
-    throw new Error(error.message || 'Failed to delete property');
-  }
-
   const cache = getLocalCache();
   const index = cache.findIndex(p => p.id === id || p.slug === id);
   if (index !== -1) {
     cache.splice(index, 1);
     saveLocalCache(cache);
   }
+
+  if (supabase) {
+    try {
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      let query = supabase.from('properties').delete();
+      if (isUUID) {
+        query = query.eq('id', id);
+      } else {
+        query = query.eq('slug', id);
+      }
+      await query;
+    } catch (err) {
+      console.warn('Supabase delete error:', err);
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────
+// ADMIN: Duplicate property
+// ─────────────────────────────────────────────────────
+export async function duplicateProperty(id) {
+  const original = await getPropertyById(id);
+  if (!original) throw new Error('Original property not found');
+  
+  const duplicated = toAdminProperty({
+    ...original,
+    id: `prop-${Date.now()}`,
+    title: `${original.title} (Copy)`,
+    slug: generateSlug(`${original.title}-copy-${Date.now().toString().slice(-4)}`),
+    publish_state: 'draft',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  });
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .insert([{
+          ...duplicated,
+          id: undefined,
+          property_media: undefined
+        }])
+        .select()
+        .single();
+      if (!error && data) {
+        const cache = getLocalCache();
+        cache.unshift(toAdminProperty(data));
+        saveLocalCache(cache);
+        return toAdminProperty(data);
+      }
+    } catch (err) {
+      console.warn('Supabase duplicate error, saved locally:', err);
+    }
+  }
+
+  const cache = getLocalCache();
+  cache.unshift(duplicated);
+  saveLocalCache(cache);
+  return duplicated;
 }
 
 // ─────────────────────────────────────────────────────
@@ -566,16 +634,4 @@ export async function getPropertyStats() {
   const featured = all.filter(p => p.featured).length;
 
   return { total, published, drafts, archived, featured };
-}
-
-// ─────────────────────────────────────────────────────
-// HELPER: Generate a slug from a title
-// ─────────────────────────────────────────────────────
-export function generateSlug(title) {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim('-');
 }

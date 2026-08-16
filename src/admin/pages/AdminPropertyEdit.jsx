@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { getPropertyById, updateProperty, publishProperty, unpublishProperty, generateSlug, validateForPublish } from '../../lib/properties';
+import { getPropertyMedia } from '../../lib/media';
 import Step1_BasicDetails from '../components/PropertyForm/Step1_BasicDetails';
 import Step2_UnitsAndPricing from '../components/PropertyForm/Step2_UnitsAndPricing';
 import Step3_AmenitiesSection from '../components/PropertyForm/Step3_AmenitiesSection';
@@ -30,9 +31,32 @@ export default function AdminPropertyEdit() {
   const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [unpublishModalOpen, setUnpublishModalOpen] = useState(false);
 
+  const SESSION_KEY = `qs_edit_snapshot_${id}`;
+
   const fetchProperty = async () => {
     setLoading(true);
     try {
+      // 1. Session snapshot check — the user's live in-progress form state.
+      //    If a snapshot exists for this property, it is the authoritative source of truth.
+      //    We do NOT overwrite it with a DB fetch, because we just saved to DB before
+      //    navigating to preview (making DB's updated_at always appear newer).
+      const snapshot = sessionStorage.getItem(SESSION_KEY);
+      if (snapshot) {
+        try {
+          const parsed = JSON.parse(snapshot);
+          if (parsed && parsed.id === id) {
+            setFormData(parsed);
+            setLastSavedData(JSON.stringify(parsed));
+            setLoading(false);
+            return; // Snapshot is the truth — done.
+          }
+        } catch (e) {
+          // Corrupt snapshot — clear it and fall through to DB load
+          sessionStorage.removeItem(SESSION_KEY);
+        }
+      }
+
+      // 2. No snapshot: normal DB load (first open, or after explicit save cleared snapshot)
       const data = await getPropertyById(id);
       if (!data) throw new Error('No data found');
       setFormData(data);
@@ -49,6 +73,28 @@ export default function AdminPropertyEdit() {
   useEffect(() => {
     fetchProperty();
   }, [id]);
+
+  // Called by MediaSection after upload, set-cover, or delete
+  // Fetches fresh media from DB and patches formData without losing other state
+  const handleMediaChange = async () => {
+    try {
+      const media = await getPropertyMedia(id);
+      const imageMedia = media.filter(m => m.media_type !== 'video');
+      const coverItem = imageMedia.find(m => m.is_cover) || imageMedia[0];
+      setFormData(prev => {
+        if (!prev) return prev;
+        const updated = {
+          ...prev,
+          property_media: media,
+          cover_image_url: coverItem ? coverItem.public_url : (prev.cover_image_url || '')
+        };
+        try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(updated)); } catch (e) {}
+        return updated;
+      });
+    } catch (err) {
+      console.warn('Failed to refresh media after upload:', err);
+    }
+  };
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -78,6 +124,11 @@ export default function AdminPropertyEdit() {
         }
       }
 
+      // Immediately persist to sessionStorage on every change (instant, synchronous)
+      try {
+        sessionStorage.setItem(`qs_edit_snapshot_${prev.id || id}`, JSON.stringify(updated));
+      } catch (e) {}
+
       return updated;
     });
   };
@@ -91,6 +142,9 @@ export default function AdminPropertyEdit() {
       
       setLastSavedData(JSON.stringify(formData));
       setLastSavedTime(new Date());
+      // Keep the snapshot alive — preview page reads from it.
+      // It will be cleared only when leaving the edit page entirely.
+      try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(formData)); } catch (e) {}
     } catch (err) {
       if (showToast) toast.error(err.message || 'Error saving property');
     } finally {
@@ -118,19 +172,21 @@ export default function AdminPropertyEdit() {
     setActiveTab(tabId);
   };
 
-  // Handle Preview Navigation with Guaranteed Instant Save
+  // Handle Preview Navigation — snapshot is the bridge between Edit and Preview
   const handleNavigateToPreview = async () => {
-    if (formData && lastSavedData !== JSON.stringify(formData)) {
-      setIsSaving(true);
-      try {
-        await updateProperty(id, formData);
-        setLastSavedData(JSON.stringify(formData));
-      } catch (err) {
-        console.warn('Auto-save before preview:', err);
-      } finally {
-        setIsSaving(false);
-      }
-    }
+    if (!formData) return;
+    // Snapshot to sessionStorage first — Preview will read this directly
+    try {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(formData));
+    } catch (e) {}
+
+    // Also persist to DB (fire-and-forget, don't block navigation)
+    updateProperty(id, formData).then(() => {
+      setLastSavedData(JSON.stringify(formData));
+    }).catch(err => {
+      console.warn('Background save before preview failed, snapshot is intact:', err);
+    });
+
     navigate(`/admin/properties/${id}/preview`);
   };
 
@@ -394,7 +450,7 @@ export default function AdminPropertyEdit() {
                 <MediaSection
                   propertyId={id}
                   coverImageUrl={formData.cover_image_url}
-                  onCoverChange={fetchProperty}
+                  onCoverChange={handleMediaChange}
                   formData={formData}
                   onFieldChange={handleChange}
                 />
