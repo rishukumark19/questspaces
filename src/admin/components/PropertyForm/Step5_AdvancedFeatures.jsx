@@ -158,43 +158,6 @@ export default function Step5_AdvancedFeatures({ formData, onChange }) {
         )}
       </div>
 
-      {/* --- Price Insights --- */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
-        <div className="flex justify-between items-center border-b pb-3">
-          <div>
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">trending_up</span> Price & Market Insights
-            </h3>
-            <p className="text-xs text-slate-500">Add data points like average locality price and trends.</p>
-          </div>
-          <button type="button" onClick={addInsight} className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
-            <span className="material-symbols-outlined text-[16px]">add</span> Add Insight
-          </button>
-        </div>
-
-        {insights.length === 0 ? (
-          <p className="text-xs text-slate-400 italic">No insights added yet.</p>
-        ) : (
-          <div className="space-y-3">
-            {insights.map((ins, idx) => (
-              <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                <div className="flex-1">
-                  <input type="text" placeholder="Label (e.g. Locality Avg)" value={ins.label} onChange={(e) => updateInsightRow(idx, 'label', e.target.value)} className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary" />
-                </div>
-                <div className="w-32">
-                  <input type="text" placeholder="Value (e.g. ₹12,500/sqft)" value={ins.value} onChange={(e) => updateInsightRow(idx, 'value', e.target.value)} className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary" />
-                </div>
-                <div className="w-24">
-                  <input type="text" placeholder="Trend (e.g. +5%)" value={ins.trend} onChange={(e) => updateInsightRow(idx, 'trend', e.target.value)} className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary" />
-                </div>
-                <button type="button" onClick={() => removeInsight(idx)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
-                  <span className="material-symbols-outlined text-[18px]">delete</span>
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* --- Buyer Personas --- */}
       <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">

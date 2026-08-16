@@ -68,6 +68,11 @@ export default function AdminPropertyPreview() {
   const highlights = property.highlights || [];
   const amenities = property.amenities || [];
   const proximity = property.proximity || [];
+  const pricing_matrix = property.pricing_matrix || [];
+  const recent_updates = property.recent_updates || [];
+  const specifications = property.specifications || [];
+  const price_insights = property.price_insights || [];
+  const buyer_personas = property.buyer_personas || [];
 
   return (
     <div>
@@ -111,7 +116,14 @@ export default function AdminPropertyPreview() {
       <div className="bg-surface text-on-surface font-body-md antialiased p-8 max-w-6xl mx-auto">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-slate-900">{property.title}</h1>
-          <p className="text-slate-500 text-sm">{property.location} • {property.property_type}</p>
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <span className="text-slate-500 text-sm">{property.location} • {property.property_type}</span>
+            {badges.map((b, i) => (
+              <span key={i} className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold uppercase rounded-full border border-amber-200">
+                {b}
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* Hero Image */}
@@ -173,6 +185,92 @@ export default function AdminPropertyPreview() {
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {/* Amenities */}
+        {amenities.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-lg font-bold text-slate-900 mb-3">Amenities</h3>
+            <div className="flex flex-wrap gap-2">
+              {amenities.map((amenityItem, i) => {
+                if (typeof amenityItem === 'string') {
+                  return (
+                    <span key={i} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[18px] text-primary">star</span>
+                      {amenityItem}
+                    </span>
+                  );
+                } else if (amenityItem.list) {
+                  return (
+                    <div key={i} className="w-full mb-2">
+                      {amenityItem.category && <h4 className="text-sm font-bold text-slate-600 uppercase tracking-wider mb-2">{amenityItem.category}</h4>}
+                      <div className="flex flex-wrap gap-2">
+                        {(amenityItem.list || []).map((amenity, j) => (
+                          <span key={`${i}-${j}`} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[18px] text-primary">star</span>
+                            {amenity}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Pricing Matrix */}
+        {pricing_matrix.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-lg font-bold text-slate-900 mb-3">Pricing Details</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse bg-white rounded-xl overflow-hidden border border-slate-200">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="py-3 px-4 text-xs font-bold text-slate-600 uppercase">Configuration</th>
+                    <th className="py-3 px-4 text-xs font-bold text-slate-600 uppercase">Size (Sq.Ft)</th>
+                    <th className="py-3 px-4 text-xs font-bold text-slate-600 uppercase">Price</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {pricing_matrix.map((row, i) => (
+                    <tr key={i} className="hover:bg-slate-50">
+                      <td className="py-3 px-4 text-sm font-semibold text-slate-800">{row.config}</td>
+                      <td className="py-3 px-4 text-sm text-slate-600">
+                        {row.superArea || row.carpetArea ? `${(row.superArea || row.carpetArea).replace(/sq\.?\s*ft\.?/i, '').trim()} Sq.Ft.` : '-'}
+                      </td>
+                      <td className="py-3 px-4 text-sm font-bold text-slate-900">
+                        {row.price ? (row.price.startsWith('₹') ? row.price : `₹${row.price}`) : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Developer Profile */}
+        {(property.developer_description || property.developer_experience || property.developer_projects_count) && (
+          <div className="mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+            <div className="flex items-center gap-4 mb-4">
+              {property.developer_logo_url && (
+                <img src={property.developer_logo_url} alt="Developer Logo" className="w-16 h-16 object-contain bg-white rounded-lg border border-slate-200 p-1" />
+              )}
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">{property.developer}</h3>
+                <div className="flex gap-4 text-sm text-slate-600 mt-1">
+                  {property.developer_experience && <span><strong className="text-slate-900">{property.developer_experience}</strong> Experience</span>}
+                  {property.developer_projects_count && <span><strong className="text-slate-900">{property.developer_projects_count}</strong> Projects</span>}
+                </div>
+              </div>
+            </div>
+            {property.developer_description && (
+              <p className="text-sm text-slate-700 leading-relaxed">{property.developer_description}</p>
+            )}
           </div>
         )}
       </div>

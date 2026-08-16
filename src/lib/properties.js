@@ -81,6 +81,15 @@ export async function getPublishedProperty(slugOrId) {
 export async function getAllProperties(filters = {}) {
   if (supabase) {
     try {
+      // Check if DB is completely empty first
+      const { count, error: countError } = await supabase
+        .from('properties')
+        .select('*', { count: 'exact', head: true });
+        
+      if (!countError && count === 0) {
+        throw new Error('Empty DB, use fallback');
+      }
+
       let query = supabase
         .from('properties')
         .select('id, slug, title, location, developer, seo_title, starting_price, status, publish_state, featured, cover_image_url, updated_at, property_type')
@@ -98,8 +107,28 @@ export async function getAllProperties(filters = {}) {
 
       const { data, error } = await query;
       if (!error && data) {
-        if (Array.isArray(data) && data.length === 0) throw new Error('Empty DB, use fallback');
-        return data.map(p => ({ ...p, starting_price: normalizePrice(p.starting_price) }));
+        let results = data.map(p => ({ ...p, starting_price: normalizePrice(p.starting_price) }));
+        
+        // Merge local cache properties that are NOT in the DB
+        const localOnly = getLocalCache().filter(lp => !data.some(dp => dp.id === lp.id));
+        let merged = [...results, ...localOnly];
+        
+        // Apply filters to merged results for local fallback items
+        if (filters.publishState && filters.publishState !== 'All') {
+          merged = merged.filter(p => p.publish_state === filters.publishState);
+        }
+        if (filters.propertyType && filters.propertyType !== 'All') {
+          merged = merged.filter(p => p.property_type === filters.propertyType);
+        }
+        if (filters.search) {
+          const s = filters.search.toLowerCase();
+          merged = merged.filter(p => 
+            (p.title && p.title.toLowerCase().includes(s)) ||
+            (p.location && p.location.toLowerCase().includes(s))
+          );
+        }
+        
+        return merged;
       }
     } catch (err) {
       console.warn('Supabase getAllProperties failed, falling back to static data:', err);
@@ -155,6 +184,16 @@ export function mapStaticToAdminFormat(staticProp) {
 let _localPropertiesCache = null;
 function getLocalCache() {
   if (!_localPropertiesCache) {
+    const saved = localStorage.getItem('questspaces_local_properties');
+    if (saved) {
+      try {
+        _localPropertiesCache = JSON.parse(saved);
+        return _localPropertiesCache;
+      } catch (e) {
+        console.error('Failed to parse local properties cache', e);
+      }
+    }
+    
     _localPropertiesCache = (STATIC_PROPERTIES || []).map(mapStaticToAdminFormat);
     
     // Add some dummy drafts for demo purposes
@@ -166,7 +205,7 @@ function getLocalCache() {
       location: 'Noida',
       publish_state: 'draft',
       featured: false,
-      property_type: 'Apartment',
+      property_type: 'Luxury Apartment',
       created_at: new Date(Date.now() - 86400000).toISOString(),
       updated_at: new Date(Date.now() - 86400000).toISOString()
     });
@@ -178,12 +217,19 @@ function getLocalCache() {
       location: 'Bangalore',
       publish_state: 'draft',
       featured: false,
-      property_type: 'Villa',
+      property_type: 'Modern Villa',
       created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
       updated_at: new Date(Date.now() - 86400000 * 2).toISOString()
     });
+    
+    saveLocalCache(_localPropertiesCache);
   }
   return _localPropertiesCache;
+}
+
+function saveLocalCache(cache) {
+  _localPropertiesCache = cache;
+  localStorage.setItem('questspaces_local_properties', JSON.stringify(cache));
 }
 
 // ─────────────────────────────────────────────────────
@@ -230,7 +276,9 @@ export async function createProperty(propertyData) {
         .single();
 
       if (!error && data) {
-         getLocalCache().unshift({ ...data });
+         const cache = getLocalCache();
+         cache.unshift({ ...data });
+         saveLocalCache(cache);
          return data;
       }
     } catch (err) {
@@ -239,7 +287,9 @@ export async function createProperty(propertyData) {
   }
   
   const newProperty = { ...propertyData, id: Date.now().toString(), publish_state: 'draft', created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
-  getLocalCache().unshift({ ...newProperty });
+  const cache = getLocalCache();
+  cache.unshift({ ...newProperty });
+  saveLocalCache(cache);
   return newProperty;
 }
 
@@ -268,8 +318,12 @@ export async function updateProperty(idOrSlug, updates) {
 
       const { data, error } = await query.select().single();
       if (!error && data) {
-         const index = getLocalCache().findIndex(p => p.id === targetId || p.slug === targetId);
-         if (index !== -1) getLocalCache()[index] = { ...getLocalCache()[index], ...cleanUpdates, updated_at: new Date().toISOString() };
+         const cache = getLocalCache();
+         const index = cache.findIndex(p => p.id === targetId || p.slug === targetId);
+         if (index !== -1) {
+            cache[index] = { ...cache[index], ...cleanUpdates, updated_at: new Date().toISOString() };
+            saveLocalCache(cache);
+         }
          return data;
       }
     } catch (err) {
@@ -277,10 +331,12 @@ export async function updateProperty(idOrSlug, updates) {
     }
   }
 
-  const index = getLocalCache().findIndex(p => p.id === targetId || p.slug === targetId);
+  const cache = getLocalCache();
+  const index = cache.findIndex(p => p.id === targetId || p.slug === targetId);
   if (index !== -1) {
-    getLocalCache()[index] = { ...getLocalCache()[index], ...cleanUpdates, updated_at: new Date().toISOString() };
-    return { ...getLocalCache()[index] };
+    cache[index] = { ...cache[index], ...cleanUpdates, updated_at: new Date().toISOString() };
+    saveLocalCache(cache);
+    return { ...cache[index] };
   }
 
   return { ...updates, id: targetId, updated_at: new Date().toISOString() };
@@ -350,11 +406,15 @@ export async function duplicateProperty(id) {
   if (error) {
     console.warn('Supabase duplicateProperty failed, duplicating locally:', error);
     const newLocalProp = { ...duplicatedData, id: Date.now().toString(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
-    getLocalCache().unshift({ ...newLocalProp });
+    const cache = getLocalCache();
+    cache.unshift({ ...newLocalProp });
+    saveLocalCache(cache);
     return newLocalProp;
   }
   
-  getLocalCache().unshift({ ...data });
+  const cache = getLocalCache();
+  cache.unshift({ ...data });
+  saveLocalCache(cache);
   return data;
 }
 
@@ -368,8 +428,12 @@ export async function deleteProperty(id) {
       if (error) console.warn('Supabase delete error:', error);
     } catch (err) {}
   }
-  const index = getLocalCache().findIndex(p => p.id === id || p.slug === id);
-  if (index !== -1) getLocalCache().splice(index, 1);
+  const cache = getLocalCache();
+  const index = cache.findIndex(p => p.id === id || p.slug === id);
+  if (index !== -1) {
+    cache.splice(index, 1);
+    saveLocalCache(cache);
+  }
 }
 
 // ─────────────────────────────────────────────────────
@@ -383,12 +447,16 @@ export async function getPropertyStats() {
         .select('publish_state, featured');
 
       if (!error && data) {
-        if (data.length === 0) throw new Error('Empty DB, use fallback');
-        const total = data.length;
-        const published = data.filter(p => p.publish_state === 'published').length;
-        const drafts = data.filter(p => p.publish_state === 'draft').length;
-        const archived = data.filter(p => p.publish_state === 'archived').length;
-        const featured = data.filter(p => p.featured).length;
+        const localOnly = getLocalCache().filter(lp => !data.some(dp => dp.id === lp.id));
+        const all = [...data, ...localOnly];
+
+        if (all.length === 0) throw new Error('Empty DB, use fallback');
+        
+        const total = all.length;
+        const published = all.filter(p => p.publish_state === 'published').length;
+        const drafts = all.filter(p => p.publish_state === 'draft').length;
+        const archived = all.filter(p => p.publish_state === 'archived').length;
+        const featured = all.filter(p => p.featured).length;
 
         return { total, published, drafts, archived, featured };
       }

@@ -228,6 +228,18 @@ export default function AdminPropertyEdit() {
             <span className="material-symbols-outlined text-[18px]">settings</span> Advanced Settings
           </button>
 
+          {isPublished && (
+            <a
+              href={`/questspaces/properties/${formData.slug || id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 font-bold text-sm rounded-xl transition-colors flex items-center gap-1.5 shadow-sm"
+              title="View live property page"
+            >
+              <span className="material-symbols-outlined text-[18px]">open_in_new</span> View Live
+            </a>
+          )}
+
           <Link
             to={`/admin/properties/${id}/preview`}
             className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-xl transition-colors flex items-center gap-1.5 shadow-sm"
