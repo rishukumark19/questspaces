@@ -8,8 +8,64 @@ export function normalizePrice(price) {
   if (!price) return price;
   const cleaned = String(price).trim();
   if (cleaned.startsWith('₹')) return cleaned;
-  const stripped = cleaned.replace(/^[?¿�?]+/, '').trim();
+  const stripped = cleaned.replace(/^[?¿?]+/, '').trim();
   return `₹${stripped}`;
+}
+
+export function normalizeProperty(p) {
+  if (!p) return null;
+  const media = p.property_media || [];
+  const imageMedia = media.filter(m => m.media_type !== 'video');
+  const videoMedia = media.filter(m => m.media_type === 'video');
+
+  const coverUrl = p.cover_image_url || (imageMedia.length > 0 ? imageMedia[0].public_url : '') || (p.images && p.images[0]) || '';
+  const allImages = imageMedia.length > 0 
+    ? imageMedia.map(m => m.public_url) 
+    : (p.images && p.images.length > 0 ? p.images : [coverUrl || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80']);
+
+  const videoUrl = p.walkthrough_video_url || p.walkthroughVideoUrl || (videoMedia.length > 0 ? videoMedia[0].public_url : '') || '';
+
+  return {
+    ...p,
+    heroImage: coverUrl,
+    images: allImages,
+    walkthroughVideoUrl: videoUrl,
+    walkthrough_video_url: videoUrl,
+    startingPrice: normalizePrice(p.starting_price || p.price),
+    priceValue: p.price_value || p.priceValue,
+    pricePerSqFt: normalizePrice(p.price_per_sqft || p.pricePerSqFt),
+    bhkOptions: p.bhk_options || p.bhkOptions || [],
+    landParcel: p.land_parcel || p.landParcel || '',
+    totalUnits: p.total_units || p.totalUnits || '',
+    towerHeight: p.tower_height || p.towerHeight || '',
+    reraId: p.rera_id || p.reraId || '',
+    reraPortalUrl: p.rera_portal_url || p.reraPortalUrl || '',
+    micromarketLabel: p.micromarket_label || p.micromarketLabel || p.micromarket || '',
+    propertyType: p.property_type || p.propertyType || '',
+    longDescription: p.long_description || p.longDescription || p.description || '',
+    developerLogoUrl: p.developer_logo_url || p.developerLogoUrl || '',
+    developerExperience: p.developer_experience || p.developerExperience || '',
+    developerProjectsCount: p.developer_projects_count || p.developerProjectsCount || '',
+    developerDescription: p.developer_description || p.developerDescription || '',
+    brochureUrl: p.brochure_url || p.brochureUrl || '',
+    masterPlanImageUrl: p.master_plan_image_url || p.masterPlanImageUrl || '',
+    pricingMatrix: (p.pricing_matrix || p.pricingMatrix || []).map(row => ({
+      ...row,
+      price: normalizePrice(row.price)
+    })),
+    possession: p.possession || '',
+    configurations: p.configurations || '',
+    priceRaw: p.price_value || p.priceValue || p.starting_price || p.price || '',
+    amenities: p.amenities || [],
+    proximity: p.proximity || [],
+    badges: p.badges || [],
+    highlights: p.highlights || [],
+    recentUpdates: p.recent_updates || p.recentUpdates || [],
+    specifications: p.specifications || [],
+    priceInsights: p.price_insights || p.priceInsights || [],
+    buyerPersonas: p.buyer_personas || p.buyerPersonas || [],
+    floorPlans: p.floor_plans || p.floorPlans || []
+  };
 }
 
 // ─────────────────────────────────────────────────────

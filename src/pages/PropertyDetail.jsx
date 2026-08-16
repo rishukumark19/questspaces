@@ -4,6 +4,7 @@ import { useProperty } from '../hooks/useProperty';
 import { useSEO } from '../hooks/useSEO';
 import { submitLead } from '../lib/leads';
 import { getPublishedProperties } from '../lib/properties';
+import { parseVideoUrl } from '../utils/video';
 
 // ─── Section IDs for sticky nav ────────────────────────────────────────────
 const SECTIONS = [
@@ -18,9 +19,17 @@ const SECTIONS = [
   { id: 'sec-similar',    label: 'Similar',     icon: 'apartment' },
 ];
 
-export default function PropertyDetail({ savedIds, onToggleSave, onOpenVIPModal }) {
+export default function PropertyDetail({ 
+  savedIds = [], 
+  onToggleSave = () => {}, 
+  onOpenVIPModal = () => {},
+  customProperty = null,
+  isPreview = false
+}) {
   const { id } = useParams();
-  const { property, loading } = useProperty(id);
+  const { property: fetchedProperty, loading: fetchLoading } = useProperty(customProperty ? null : id);
+  const property = customProperty || fetchedProperty;
+  const loading = customProperty ? false : fetchLoading;
 
   useSEO({
     title: property?.title,
@@ -43,6 +52,10 @@ export default function PropertyDetail({ savedIds, onToggleSave, onOpenVIPModal 
   // ── Gallery state ────────────────────────────────────────────────────────
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+
+  // Video parsing
+  const videoInfo = parseVideoUrl(property?.walkthroughVideoUrl || property?.walkthrough_video_url);
 
   // ── Lead form state ──────────────────────────────────────────────────────
   const [visitSubmitted, setVisitSubmitted] = useState(false);
@@ -339,9 +352,21 @@ export default function PropertyDetail({ savedIds, onToggleSave, onOpenVIPModal 
             />
             <div className="absolute inset-0 bg-gradient-to-t from-primary-container/80 via-transparent to-transparent pointer-events-none" />
 
-            <div className="absolute top-stack-md left-stack-md bg-surface/40 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-sm flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[14px]">photo_library</span>
-              {activeImageIndex + 1} / {property.images?.length || 1}
+            <div className="absolute top-stack-md left-stack-md flex items-center gap-2">
+              <div className="bg-surface/40 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-sm flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[14px]">photo_library</span>
+                {activeImageIndex + 1} / {property.images?.length || 1}
+              </div>
+              {videoInfo && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIsVideoModalOpen(true); }}
+                  className="bg-primary/90 hover:bg-primary text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-md flex items-center gap-1.5 transition-all hover:scale-105 border border-white/20 cursor-pointer"
+                  title="Watch Video Walkthrough"
+                >
+                  <span className="material-symbols-outlined text-[16px] text-amber-300">play_circle</span>
+                  <span>Video Tour</span>
+                </button>
+              )}
             </div>
 
             <div className="absolute top-stack-md right-stack-md">
@@ -384,21 +409,36 @@ export default function PropertyDetail({ savedIds, onToggleSave, onOpenVIPModal 
           </div>
 
           {/* Thumbnail strip */}
-          {property.images && property.images.length > 1 && (
-            <div className="flex gap-3 mt-4 overflow-x-auto hide-scrollbar pb-2">
-              {property.images.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveImageIndex(idx)}
-                  className={`relative w-24 h-16 rounded-lg overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${
-                    activeImageIndex === idx ? 'border-primary opacity-100' : 'border-transparent opacity-60 hover:opacity-100'
-                  }`}
-                >
-                  <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="flex gap-3 mt-4 overflow-x-auto hide-scrollbar pb-2">
+            {property.images && property.images.map((img, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActiveImageIndex(idx)}
+                className={`relative w-24 h-16 rounded-lg overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${
+                  activeImageIndex === idx ? 'border-primary opacity-100' : 'border-transparent opacity-60 hover:opacity-100'
+                }`}
+              >
+                <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+              </button>
+            ))}
+
+            {/* Video tour button thumbnail */}
+            {videoInfo && (
+              <button
+                type="button"
+                onClick={() => setIsVideoModalOpen(true)}
+                className="relative w-28 h-16 rounded-lg overflow-hidden shrink-0 border-2 border-primary/50 bg-slate-900 flex flex-col items-center justify-center text-white cursor-pointer hover:border-primary group shadow-sm transition-all"
+              >
+                {videoInfo.thumbnailUrl ? (
+                  <img src={videoInfo.thumbnailUrl} alt="Video preview" className="w-full h-full object-cover opacity-60 group-hover:opacity-90 transition-opacity" />
+                ) : null}
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
+                  <span className="material-symbols-outlined text-amber-400 text-2xl group-hover:scale-110 transition-transform">play_circle</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-white">Video Tour</span>
+                </div>
+              </button>
+            )}
+          </div>
 
           {/* Lightbox */}
           {isLightboxOpen && (
@@ -418,6 +458,45 @@ export default function PropertyDetail({ savedIds, onToggleSave, onOpenVIPModal 
               </button>
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white font-bold tracking-widest text-sm bg-black/50 px-4 py-2 rounded-full backdrop-blur-md">
                 {activeImageIndex + 1} / {property.images?.length || 1}
+              </div>
+            </div>
+          )}
+
+          {/* Dedicated Video Modal */}
+          {isVideoModalOpen && videoInfo && (
+            <div 
+              className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 sm:p-8 animate-in fade-in duration-200"
+              onClick={() => setIsVideoModalOpen(false)}
+            >
+              <button
+                type="button"
+                onClick={() => setIsVideoModalOpen(false)}
+                className="absolute top-6 right-6 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-full cursor-pointer transition-colors border-none z-10 flex items-center justify-center"
+                title="Close video"
+              >
+                <span className="material-symbols-outlined text-2xl">close</span>
+              </button>
+              <div 
+                className="w-full max-w-5xl aspect-video rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/20 relative"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {videoInfo.type === 'youtube' || videoInfo.type === 'vimeo' || videoInfo.type === 'custom' ? (
+                  <iframe
+                    src={videoInfo.embedUrl}
+                    title={`${property.title} Video Tour`}
+                    className="w-full h-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video
+                    src={videoInfo.embedUrl}
+                    controls
+                    autoPlay
+                    className="w-full h-full"
+                    poster={property.heroImage}
+                  />
+                )}
               </div>
             </div>
           )}
@@ -766,7 +845,17 @@ export default function PropertyDetail({ savedIds, onToggleSave, onOpenVIPModal 
                       </button>
                     )}
                     {property.walkthroughVideoUrl && (
-                      <a href={property.walkthroughVideoUrl} target="_blank" rel="noreferrer" className="flex items-center gap-3 p-4 bg-white rounded-lg border border-slate-200 hover:border-primary hover:shadow-md transition-all cursor-pointer text-left group no-underline">
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          if (videoInfo) {
+                            setIsVideoModalOpen(true);
+                          } else {
+                            window.open(property.walkthroughVideoUrl, '_blank', 'noopener,noreferrer');
+                          }
+                        }} 
+                        className="flex items-center gap-3 p-4 bg-white rounded-lg border border-slate-200 hover:border-primary hover:shadow-md transition-all cursor-pointer text-left group"
+                      >
                         <div className="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center shrink-0 group-hover:bg-purple-100 transition-colors">
                           <span className="material-symbols-outlined text-purple-500">play_circle</span>
                         </div>
@@ -774,7 +863,48 @@ export default function PropertyDetail({ savedIds, onToggleSave, onOpenVIPModal 
                           <p className="font-bold text-sm text-slate-800 group-hover:text-primary transition-colors">Video Tour</p>
                           <p className="text-[10px] text-slate-500">Watch Walkthrough</p>
                         </div>
-                      </a>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Virtual Video Tour Section */}
+              {videoInfo && (
+                <div className="bg-slate-900 text-white p-6 sm:p-8 rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                      <div className="flex items-center gap-2 text-amber-400 text-xs uppercase font-bold tracking-widest mb-1">
+                        <span className="material-symbols-outlined text-[16px]">videocam</span> Virtual Experience
+                      </div>
+                      <h3 className="text-xl sm:text-2xl font-bold text-white">Video Walkthrough & Tour</h3>
+                      <p className="text-xs text-slate-400 mt-1">Take an immersive virtual tour of {property.title}.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsVideoModalOpen(true)}
+                      className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-2 self-start sm:self-auto border border-white/20 cursor-pointer shadow-sm"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">fullscreen</span> Expand Fullscreen
+                    </button>
+                  </div>
+
+                  <div className="relative aspect-video rounded-xl overflow-hidden bg-black shadow-inner border border-white/10">
+                    {videoInfo.type === 'youtube' || videoInfo.type === 'vimeo' || videoInfo.type === 'custom' ? (
+                      <iframe
+                        src={videoInfo.embedUrl}
+                        title={`${property.title} Video Walkthrough`}
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <video
+                        src={videoInfo.embedUrl}
+                        controls
+                        className="w-full h-full object-cover"
+                        poster={property.heroImage}
+                      />
                     )}
                   </div>
                 </div>
