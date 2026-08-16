@@ -141,7 +141,7 @@ export default function AdminLayout() {
               </button>
 
               <a
-                href="/"
+                href={import.meta.env.BASE_URL || '/questspaces/'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 px-4 py-3 rounded-lg font-label-bold text-white/70 hover:bg-white/10 hover:text-white transition-colors"

@@ -7,9 +7,9 @@ import { PROPERTIES as STATIC_PROPERTIES } from '../data/properties';
 export function normalizePrice(price) {
   if (!price) return price;
   const cleaned = String(price).trim();
-  if (cleaned.startsWith('\u20B9')) return cleaned;
-  const stripped = cleaned.replace(/^[?¿\uFFFD\u003F]+/, '').trim();
-  return `\u20B9${stripped}`;
+  if (cleaned.startsWith('₹')) return cleaned;
+  const stripped = cleaned.replace(/^[?¿�?]+/, '').trim();
+  return `₹${stripped}`;
 }
 
 // ─────────────────────────────────────────────────────
@@ -27,176 +27,82 @@ export async function getPublishedProperties(filters = {}) {
   if (filters.micromarket && filters.micromarket !== 'All') {
     query = query.ilike('micromarket', `%${filters.micromarket}%`);
   }
-  if (filters.propertyType && filters.propertyType !== 'All') {
-    query = query.eq('property_type', filters.propertyType);
+  if (filters.property_type && filters.property_type !== 'All') {
+    query = query.eq('property_type', filters.property_type);
   }
   if (filters.status && filters.status !== 'All') {
-    query = query.ilike('status', `%${filters.status}%`);
-  }
-  if (filters.maxPrice) {
-    query = query.lte('price_value', filters.maxPrice * 100000);
-  }
-  if (filters.search) {
-    query = query.or(`title.ilike.%${filters.search}%,location.ilike.%${filters.search}%,developer.ilike.%${filters.search}%,micromarket.ilike.%${filters.search}%`);
-  }
-  if (filters.bhk && filters.bhk !== 'All') {
-    query = query.contains('bhk_options', [filters.bhk]);
+    query = query.eq('status', filters.status);
   }
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data || []).map(p => ({ ...p, starting_price: normalizePrice(p.starting_price) }));
+  
+  return data.map(p => ({
+    ...p,
+    starting_price: normalizePrice(p.starting_price)
+  }));
 }
 
 // ─────────────────────────────────────────────────────
-// PUBLIC: Fetch a single published property by slug
+// PUBLIC: Fetch single published property by ID or Slug
 // ─────────────────────────────────────────────────────
 export async function getPublishedProperty(slugOrId) {
-  if (!supabase) throw new Error('Supabase not configured');
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
-
-  let query = supabase
-    .from('properties')
-    .select('*, property_media(id, public_url, is_cover, display_order, media_type, thumbnail_url)')
-    .eq('publish_state', 'published');
-
-  if (isUUID) {
-    query = query.eq('id', slugOrId);
-  } else {
-    query = query.eq('slug', slugOrId);
-  }
-
-  const { data, error } = await query.single();
-  if (error) {
-    const found = STATIC_PROPERTIES.find(p => p.slug === slugOrId || p.id === slugOrId);
-    if (found) return { ...found, starting_price: normalizePrice(found.starting_price) };
-    throw error;
-  }
-  return { ...data, starting_price: normalizePrice(data.starting_price) };
-}
-
-// ─────────────────────────────────────────────────────
-// ADMIN: Fetch ALL properties (including drafts/archived)
-// ─────────────────────────────────────────────────────
-export async function getAllProperties(filters = {}) {
   if (supabase) {
     try {
-      // Check if DB is completely empty first
-      const { count, error: countError } = await supabase
-        .from('properties')
-        .select('*', { count: 'exact', head: true });
-        
-      if (!countError && count === 0) {
-        throw new Error('Empty DB, use fallback');
-      }
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
 
       let query = supabase
         .from('properties')
-        .select('id, slug, title, location, developer, seo_title, starting_price, status, publish_state, featured, cover_image_url, updated_at, property_type')
-        .order('updated_at', { ascending: false });
+        .select('*, property_media(id, public_url, is_cover, display_order, media_type, thumbnail_url, storage_path)')
+        .eq('publish_state', 'published');
 
-      if (filters.publishState && filters.publishState !== 'All') {
-        query = query.eq('publish_state', filters.publishState);
-      }
-      if (filters.propertyType && filters.propertyType !== 'All') {
-        query = query.eq('property_type', filters.propertyType);
-      }
-      if (filters.search) {
-        query = query.or(`title.ilike.%${filters.search}%,location.ilike.%${filters.search}%`);
+      if (isUUID) {
+        query = query.eq('id', slugOrId);
+      } else {
+        query = query.eq('slug', slugOrId);
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query.single();
       if (!error && data) {
-        let results = data.map(p => ({ ...p, starting_price: normalizePrice(p.starting_price) }));
-        
-        // Merge local cache properties that are NOT in the DB
-        const localOnly = getLocalCache().filter(lp => !data.some(dp => dp.id === lp.id));
-        let merged = [...results, ...localOnly];
-        
-        // Apply filters to merged results for local fallback items
-        if (filters.publishState && filters.publishState !== 'All') {
-          merged = merged.filter(p => p.publish_state === filters.publishState);
-        }
-        if (filters.propertyType && filters.propertyType !== 'All') {
-          merged = merged.filter(p => p.property_type === filters.propertyType);
-        }
-        if (filters.search) {
-          const s = filters.search.toLowerCase();
-          merged = merged.filter(p => 
-            (p.title && p.title.toLowerCase().includes(s)) ||
-            (p.location && p.location.toLowerCase().includes(s))
-          );
-        }
-        
-        return merged;
+        return {
+          ...data,
+          starting_price: normalizePrice(data.starting_price)
+        };
       }
     } catch (err) {
-      console.warn('Supabase getAllProperties failed, falling back to static data:', err);
+      console.warn('Supabase getPublishedProperty failed, falling back to static properties:', err);
     }
   }
 
-  // Fallback to static properties formatted for admin
-  let list = [...getLocalCache()];
-  if (filters.publishState && filters.publishState !== 'All') {
-    list = list.filter(p => p.publish_state === filters.publishState);
+  const found = STATIC_PROPERTIES.find(p => p.id === slugOrId || p.slug === slugOrId);
+  if (found) {
+    return {
+      ...found,
+      starting_price: normalizePrice(found.starting_price || found.price)
+    };
   }
-  if (filters.propertyType && filters.propertyType !== 'All') {
-    list = list.filter(p => p.property_type === filters.propertyType);
-  }
-  if (filters.search) {
-    const s = filters.search.toLowerCase();
-    list = list.filter(p => 
-      (p.title && p.title.toLowerCase().includes(s)) ||
-      (p.location && p.location.toLowerCase().includes(s))
-    );
-  }
-  return list;
+  return null;
 }
 
-// Map static camelCase property to Supabase snake_case format for Admin consumption
-export function mapStaticToAdminFormat(staticProp) {
-  if (!staticProp) return null;
-  return {
-    ...staticProp,
-    property_type: staticProp.propertyType,
-    starting_price: normalizePrice(staticProp.startingPrice),
-    price_value: staticProp.priceValue,
-    price_per_sqft: staticProp.pricePerSqFt,
-    bhk_options: staticProp.bhkOptions,
-    land_parcel: staticProp.landParcel,
-    total_units: staticProp.totalUnits,
-    tower_height: staticProp.towerHeight,
-    rera_id: staticProp.reraId,
-    rera_portal_url: staticProp.reraPortalUrl,
-    micromarket_label: staticProp.micromarketLabel,
-    long_description: staticProp.longDescription,
-    developer_logo_url: staticProp.developerLogoUrl,
-    developer_experience: staticProp.developerExperience,
-    developer_projects_count: staticProp.developerProjectsCount,
-    developer_description: staticProp.developerDescription,
-    full_address: staticProp.fullAddress,
-    cover_image_url: staticProp.heroImage || staticProp.images?.[0] || '',
-    pricing_matrix: staticProp.pricingMatrix,
-    publish_state: 'published'
-  };
-}
-
+// ─────────────────────────────────────────────────────
+// ADMIN: Fetch all properties (including drafts)
+// ─────────────────────────────────────────────────────
 let _localPropertiesCache = null;
+
 function getLocalCache() {
-  if (!_localPropertiesCache) {
-    const saved = localStorage.getItem('questspaces_local_properties');
-    if (saved) {
-      try {
-        _localPropertiesCache = JSON.parse(saved);
-        return _localPropertiesCache;
-      } catch (e) {
-        console.error('Failed to parse local properties cache', e);
-      }
+  if (_localPropertiesCache) return _localPropertiesCache;
+  const saved = localStorage.getItem('questspaces_local_properties');
+  if (saved) {
+    try {
+      _localPropertiesCache = JSON.parse(saved);
+      return _localPropertiesCache;
+    } catch (e) {
+      console.warn('Local properties cache corrupted, resetting.');
     }
-    
-    _localPropertiesCache = (STATIC_PROPERTIES || []).map(mapStaticToAdminFormat);
-    
-    // Add some dummy drafts for demo purposes
+  }
+  
+  _localPropertiesCache = [];
+  if (STATIC_PROPERTIES && STATIC_PROPERTIES.length > 0) {
     _localPropertiesCache.push({
       id: 'dummy-draft-1',
       title: 'Godrej Woods',
@@ -230,6 +136,42 @@ function getLocalCache() {
 function saveLocalCache(cache) {
   _localPropertiesCache = cache;
   localStorage.setItem('questspaces_local_properties', JSON.stringify(cache));
+}
+
+export async function getAllProperties(filters = {}) {
+  let dbProps = [];
+  if (supabase) {
+    try {
+      let query = supabase
+        .from('properties')
+        .select('*, property_media(id, public_url, is_cover, display_order, media_type)')
+        .order('created_at', { ascending: false });
+
+      if (filters.publishState && filters.publishState !== 'all') {
+        query = query.eq('publish_state', filters.publishState);
+      }
+      
+      const { data, error } = await query;
+      if (!error && data) {
+        dbProps = data;
+      }
+    } catch (err) {
+      console.warn('Supabase getAllProperties failed:', err);
+    }
+  }
+
+  let localProps = getLocalCache();
+  if (filters.publishState && filters.publishState !== 'all') {
+    localProps = localProps.filter(p => p.publish_state === filters.publishState);
+  }
+
+  const localOnly = localProps.filter(lp => !dbProps.some(dp => dp.id === lp.id));
+  const merged = [...dbProps, ...localOnly];
+
+  return merged.map(p => ({
+    ...p,
+    starting_price: normalizePrice(p.starting_price)
+  }));
 }
 
 // ─────────────────────────────────────────────────────
@@ -282,7 +224,6 @@ export async function createProperty(propertyData) {
     throw new Error(error.message || 'Failed to create property in database');
   }
 
-  // Save to local cache as well so it's instantly available without refetch
   if (data) {
     const cache = getLocalCache();
     cache.unshift({ ...data });
@@ -297,49 +238,43 @@ export async function createProperty(propertyData) {
 // ADMIN: Update an existing property
 // ─────────────────────────────────────────────────────
 export async function updateProperty(idOrSlug, updates) {
-  // Strip joined relational fields and computed counts that don't belong to the properties table
   const { property_media, leads_count, id: bodyId, ...cleanUpdates } = updates;
   
-  // Try to use the actual UUID if present in the updates object
   const targetId = bodyId || idOrSlug;
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId);
 
-  if (supabase) {
-    try {
-      let query = supabase
-        .from('properties')
-        .update({ ...cleanUpdates, updated_at: new Date().toISOString() });
-
-      if (isUUID) {
-        query = query.eq('id', targetId);
-      } else {
-        query = query.eq('slug', targetId);
-      }
-
-      const { data, error } = await query.select().single();
-      if (!error && data) {
-         const cache = getLocalCache();
-         const index = cache.findIndex(p => p.id === targetId || p.slug === targetId);
-         if (index !== -1) {
-            cache[index] = { ...cache[index], ...cleanUpdates, updated_at: new Date().toISOString() };
-            saveLocalCache(cache);
-         }
-         return data;
-      }
-    } catch (err) {
-      console.warn('Supabase updateProperty failed:', err);
-    }
+  if (!supabase) {
+    throw new Error('Supabase is not configured. Cannot update properties offline.');
   }
 
-  const cache = getLocalCache();
-  const index = cache.findIndex(p => p.id === targetId || p.slug === targetId);
-  if (index !== -1) {
-    cache[index] = { ...cache[index], ...cleanUpdates, updated_at: new Date().toISOString() };
-    saveLocalCache(cache);
-    return { ...cache[index] };
+  let query = supabase
+    .from('properties')
+    .update({ ...cleanUpdates, updated_at: new Date().toISOString() });
+
+  if (isUUID) {
+    query = query.eq('id', targetId);
+  } else {
+    query = query.eq('slug', targetId);
   }
 
-  return { ...updates, id: targetId, updated_at: new Date().toISOString() };
+  const { data, error } = await query.select().single();
+  
+  if (error) {
+    console.error('Supabase updateProperty error:', error);
+    throw new Error(error.message || 'Failed to update property in database');
+  }
+
+  if (data) {
+     const cache = getLocalCache();
+     const index = cache.findIndex(p => p.id === targetId || p.slug === targetId);
+     if (index !== -1) {
+        cache[index] = { ...cache[index], ...cleanUpdates, updated_at: new Date().toISOString() };
+        saveLocalCache(cache);
+     }
+     return data;
+  }
+  
+  throw new Error('Failed to update property');
 }
 
 // ─────────────────────────────────────────────────────
@@ -381,6 +316,8 @@ export async function unpublishProperty(id) {
 // ADMIN: Duplicate an existing property as a draft
 // ─────────────────────────────────────────────────────
 export async function duplicateProperty(id) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+
   const original = await getPropertyById(id);
   if (!original) throw new Error('Original property not found');
 
@@ -404,12 +341,8 @@ export async function duplicateProperty(id) {
     .single();
 
   if (error) {
-    console.warn('Supabase duplicateProperty failed, duplicating locally:', error);
-    const newLocalProp = { ...duplicatedData, id: Date.now().toString(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
-    const cache = getLocalCache();
-    cache.unshift({ ...newLocalProp });
-    saveLocalCache(cache);
-    return newLocalProp;
+    console.error('Supabase duplicateProperty error:', error);
+    throw new Error(error.message || 'Failed to duplicate property');
   }
   
   const cache = getLocalCache();
@@ -419,15 +352,17 @@ export async function duplicateProperty(id) {
 }
 
 // ─────────────────────────────────────────────────────
-// ADMIN: Delete property (hard delete — media cascades via FK)
+// ADMIN: Delete property (hard delete - media cascades via FK)
 // ─────────────────────────────────────────────────────
 export async function deleteProperty(id) {
-  if (supabase) {
-    try {
-      const { error } = await supabase.from('properties').delete().eq('id', id);
-      if (error) console.warn('Supabase delete error:', error);
-    } catch (err) {}
+  if (!supabase) throw new Error('Supabase is not configured.');
+
+  const { error } = await supabase.from('properties').delete().eq('id', id);
+  if (error) {
+    console.error('Supabase delete error:', error);
+    throw new Error(error.message || 'Failed to delete property');
   }
+
   const cache = getLocalCache();
   const index = cache.findIndex(p => p.id === id || p.slug === id);
   if (index !== -1) {

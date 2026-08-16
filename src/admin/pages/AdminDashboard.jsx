@@ -335,12 +335,17 @@ export default function AdminDashboard() {
                 <div className="font-bold text-slate-800 text-sm">View Leads</div>
               </Link>
 
-              <Link to="/" target="_blank" className="flex flex-col items-center justify-center p-6 bg-white border border-outline-variant/30 rounded-2xl hover:border-blue-500 hover:shadow-md transition-all group">
+              <a
+                href={import.meta.env.BASE_URL || '/questspaces/'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center justify-center p-6 bg-white border border-outline-variant/30 rounded-2xl hover:border-blue-500 hover:shadow-md transition-all group"
+              >
                 <div className="w-12 h-12 bg-blue-500/5 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                   <span className="material-symbols-outlined text-blue-600 text-[24px]">open_in_new</span>
                 </div>
                 <div className="font-bold text-slate-800 text-sm">Live Website</div>
-              </Link>
+              </a>
             </div>
           </div>
         </div>
