@@ -24,6 +24,8 @@ export default function AdminPropertyEdit() {
   const [showPublishSettings, setShowPublishSettings] = useState(false);
   const toast = useToast();
 
+  useDocumentTitle(formData?.title ? `Edit ${formData.title}` : 'Edit Property');
+
   // Modals for publish toggling
   const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [unpublishModalOpen, setUnpublishModalOpen] = useState(false);
@@ -32,12 +34,13 @@ export default function AdminPropertyEdit() {
     setLoading(true);
     try {
       const data = await getPropertyById(id);
+      if (!data) throw new Error('No data found');
       setFormData(data);
       setLastSavedData(JSON.stringify(data));
       setLastSavedTime(new Date());
     } catch (err) {
+      console.error('Failed to load property details:', err);
       toast.error('Failed to load property details');
-      navigate('/admin/properties');
     } finally {
       setLoading(false);
     }
@@ -80,7 +83,7 @@ export default function AdminPropertyEdit() {
   };
 
   const handleSave = async (showToast = true, isAutoSave = false) => {
-    if (isSaving) return;
+    if (isSaving || !formData) return;
     setIsSaving(true);
     try {
       await updateProperty(id, formData);
@@ -94,18 +97,6 @@ export default function AdminPropertyEdit() {
       setIsSaving(false);
     }
   };
-
-  // 4.1 Data Loss Prevention (Before Unload)
-  useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (lastSavedData && lastSavedData !== JSON.stringify(formData)) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [formData, lastSavedData]);
 
   // 4.1 Auto-Save (60 seconds)
   useEffect(() => {
@@ -133,6 +124,7 @@ export default function AdminPropertyEdit() {
   }, [formData, lastSavedData]);
 
   const executePublish = async () => {
+    if (!formData) return;
     setIsSaving(true);
     try {
       await publishProperty(id, formData);
@@ -177,11 +169,22 @@ export default function AdminPropertyEdit() {
     );
   }
 
+  if (!formData) {
+    return (
+      <div className="p-12 text-center min-h-[50vh] flex flex-col items-center justify-center font-body-md">
+        <span className="material-symbols-outlined text-5xl text-slate-300 mb-3">error</span>
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Property Not Found</h2>
+        <p className="text-sm text-slate-500 mb-6">Could not load details for ID/slug: <code className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono">{id}</code></p>
+        <Link to="/admin/properties" className="bg-primary text-gold px-6 py-2.5 rounded-xl font-bold text-sm shadow hover:scale-95 transition-transform flex items-center gap-2">
+          <span className="material-symbols-outlined text-[18px]">arrow_back</span> Return to Properties
+        </Link>
+      </div>
+    );
+  }
+
   const validation = validateForPublish(formData);
   const hasUnsavedChanges = lastSavedData !== JSON.stringify(formData);
   const isPublished = formData.publish_state === 'published';
-
-  useDocumentTitle(formData?.title ? `Edit ${formData.title}` : 'Edit Property');
 
   return (
     <div className="p-8 max-w-7xl mx-auto font-body-md">

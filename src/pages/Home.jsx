@@ -7,29 +7,7 @@ import PropertyCard from '../components/PropertyCard';
 import PropertyCardSkeleton from '../components/PropertyCardSkeleton';
 import DeveloperStrip from '../components/DeveloperStrip';
 
-const TESTIMONIALS = [
-  {
-    id: 1,
-    text: "The market analysis and guidance provided by Quest Spaces was incredible. They helped me secure an off-market luxury apartment in Hebbal that fits my family perfectly and aligns with my investment goals.",
-    name: "Priya Sharma",
-    title: "Tech Executive & Investor",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=150&auto=format&fit=crop"
-  },
-  {
-    id: 2,
-    text: "I was looking for a high-yield asset in North Bengaluru. The advisory desk mapped out the KIADB tech park corridor and found a plotted development that appreciated 18% in just 10 months.",
-    name: "Vikram Reddy",
-    title: "NRI Investor, Dubai",
-    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=150&auto=format&fit=crop"
-  },
-  {
-    id: 3,
-    text: "Professional, transparent, and extremely knowledgeable about Karnataka RERA norms. They made our transition from Mumbai to Bengaluru completely seamless.",
-    name: "Anjali Desai",
-    title: "First-Time Homebuyer",
-    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=150&auto=format&fit=crop"
-  }
-];
+import { getAllTestimonials } from '../lib/testimonials';
 
 export default function Home({ savedIds, onToggleSave, onOpenVIPModal }) {
   const navigate = useNavigate();
@@ -37,7 +15,18 @@ export default function Home({ savedIds, onToggleSave, onOpenVIPModal }) {
   const [searchBhk, setSearchBhk] = useState('');
   const [searchBudget, setSearchBudget] = useState('');
   const { properties, loading } = useProperties();
+  const [testimonials, setTestimonials] = useState([]);
   const [currentTestimonialIdx, setCurrentTestimonialIdx] = useState(0);
+
+  useEffect(() => {
+    getAllTestimonials({ status: 'published' })
+      .then(data => {
+        if (data && data.length > 0) {
+          setTestimonials(data);
+        }
+      })
+      .catch(err => console.error('Failed to load testimonials on Home:', err));
+  }, []);
 
   useSEO({
     title: 'Home',
@@ -59,11 +48,12 @@ export default function Home({ savedIds, onToggleSave, onOpenVIPModal }) {
   });
 
   useEffect(() => {
+    if (!testimonials.length) return;
     const timer = setInterval(() => {
-      setCurrentTestimonialIdx(prev => (prev + 1) % TESTIMONIALS.length);
+      setCurrentTestimonialIdx(prev => (prev + 1) % testimonials.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, []);
+  }, [testimonials]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -361,41 +351,51 @@ export default function Home({ savedIds, onToggleSave, onOpenVIPModal }) {
             {/* Testimonial Snapshot Carousel */}
             <div className="bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-outline-variant/30 relative h-full flex flex-col justify-center">
               <span className="material-symbols-outlined text-secondary/10 text-8xl absolute -top-4 right-4 z-0">format_quote</span>
-              <div className="relative z-10 transition-opacity duration-500 min-h-[220px] flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-1.5 mb-6">
-                    {[1, 2, 3, 4, 5].map(star => (
-                      <span key={star} className="material-symbols-outlined text-gold text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                    ))}
+              {testimonials.length > 0 && testimonials[currentTestimonialIdx] ? (
+                <div className="relative z-10 transition-opacity duration-500 min-h-[220px] flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-6">
+                      {Array.from({ length: testimonials[currentTestimonialIdx].rating || 5 }).map((_, star) => (
+                        <span key={star} className="material-symbols-outlined text-gold text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                      ))}
+                    </div>
+                    <p className="font-headline-sm text-lg italic text-on-surface-variant mb-8 leading-relaxed">
+                      "{testimonials[currentTestimonialIdx].quote || testimonials[currentTestimonialIdx].text}"
+                    </p>
                   </div>
-                  <p className="font-headline-sm text-lg italic text-on-surface-variant mb-8 leading-relaxed">
-                    "{TESTIMONIALS[currentTestimonialIdx].text}"
-                  </p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <img 
-                      src={TESTIMONIALS[currentTestimonialIdx].image} 
-                      alt={TESTIMONIALS[currentTestimonialIdx].name} 
-                      className="w-12 h-12 rounded-full object-cover border border-outline-variant/40"
-                    />
-                    <div>
-                      <h4 className="font-label-bold text-primary font-bold">{TESTIMONIALS[currentTestimonialIdx].name}</h4>
-                      <p className="text-xs text-on-surface-variant">{TESTIMONIALS[currentTestimonialIdx].title}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <img 
+                        src={testimonials[currentTestimonialIdx].image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop'} 
+                        alt={testimonials[currentTestimonialIdx].name} 
+                        className="w-12 h-12 rounded-full object-cover border border-outline-variant/40"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop';
+                        }}
+                      />
+                      <div>
+                        <h4 className="font-label-bold text-primary font-bold">{testimonials[currentTestimonialIdx].name}</h4>
+                        <p className="text-xs text-on-surface-variant">{testimonials[currentTestimonialIdx].title}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5">
+                      {testimonials.map((_, idx) => (
+                        <button 
+                          key={idx}
+                          onClick={() => setCurrentTestimonialIdx(idx)}
+                          className={`w-2 h-2 rounded-full transition-all cursor-pointer border-none p-0 ${idx === currentTestimonialIdx ? 'bg-primary w-6' : 'bg-outline-variant hover:bg-primary/50'}`}
+                          aria-label={`Go to testimonial ${idx + 1}`}
+                        />
+                      ))}
                     </div>
                   </div>
-                  <div className="flex gap-1.5">
-                    {TESTIMONIALS.map((_, idx) => (
-                      <button 
-                        key={idx}
-                        onClick={() => setCurrentTestimonialIdx(idx)}
-                        className={`w-2 h-2 rounded-full transition-all cursor-pointer border-none p-0 ${idx === currentTestimonialIdx ? 'bg-primary w-6' : 'bg-outline-variant hover:bg-primary/50'}`}
-                        aria-label={`Go to testimonial ${idx + 1}`}
-                      />
-                    ))}
-                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="relative z-10 text-center py-8 text-on-surface-variant">
+                  <p className="italic">No client reviews available currently.</p>
+                </div>
+              )}
             </div>
 
           </div>

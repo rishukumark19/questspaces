@@ -21,27 +21,86 @@ export async function submitLead(leadData) {
   return data;
 }
 
+const LOCAL_LEADS_KEY = 'questspaces_leads_data';
+
+const DUMMY_LEADS = [
+  {
+    id: '1',
+    name: 'Rahul Khanna',
+    phone: '+91 98450 12345',
+    email: 'rahul.khanna@techcorp.com',
+    property_title: 'L&T Realty Elara Celestia',
+    lead_type: 'VIP Booking',
+    message: 'Interested in a 4 BHK high-floor apartment.',
+    status: 'New',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: '2',
+    name: 'Sneha Patel',
+    phone: '+91 97123 45678',
+    email: 'sneha.p@investors.in',
+    property_title: 'Embassy Astra',
+    lead_type: 'VIP Booking',
+    message: 'Looking for investment options in Hebbal.',
+    status: 'Contacted',
+    created_at: new Date(Date.now() - 86400000).toISOString()
+  }
+];
+
+function getStoredLeads() {
+  try {
+    const saved = localStorage.getItem(LOCAL_LEADS_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch (e) {
+    console.warn('Failed reading leads from localStorage', e);
+  }
+  return [...DUMMY_LEADS];
+}
+
 // Admin: Fetch all leads
 export async function getAllLeads(filters = {}) {
-  if (!supabase) throw new Error('Supabase not configured');
-  let query = supabase
-    .from('leads')
-    .select('*')
-    .order('created_at', { ascending: false });
+  if (supabase) {
+    try {
+      let query = supabase
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false });
 
+      if (filters.status && filters.status !== 'All') {
+        query = query.eq('status', filters.status);
+      }
+      if (filters.leadType && filters.leadType !== 'All') {
+        query = query.eq('lead_type', filters.leadType);
+      }
+      if (filters.search) {
+        query = query.or(`name.ilike.%${filters.search}%,phone.ilike.%${filters.search}%,email.ilike.%${filters.search}%,property_title.ilike.%${filters.search}%`);
+      }
+
+      const { data, error } = await query;
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('Supabase getAllLeads failed, falling back to local storage:', err);
+    }
+  }
+
+  let list = getStoredLeads();
   if (filters.status && filters.status !== 'All') {
-    query = query.eq('status', filters.status);
+    list = list.filter(l => l.status === filters.status);
   }
   if (filters.leadType && filters.leadType !== 'All') {
-    query = query.eq('lead_type', filters.leadType);
+    list = list.filter(l => l.lead_type === filters.leadType);
   }
   if (filters.search) {
-    query = query.or(`name.ilike.%${filters.search}%,phone.ilike.%${filters.search}%,email.ilike.%${filters.search}%,property_title.ilike.%${filters.search}%`);
+    const s = filters.search.toLowerCase();
+    list = list.filter(l => 
+      (l.name && l.name.toLowerCase().includes(s)) ||
+      (l.phone && l.phone.toLowerCase().includes(s)) ||
+      (l.email && l.email.toLowerCase().includes(s)) ||
+      (l.property_title && l.property_title.toLowerCase().includes(s))
+    );
   }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data || [];
+  return list;
 }
 
 // Admin: Update lead status

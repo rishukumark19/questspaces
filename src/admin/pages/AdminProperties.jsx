@@ -330,10 +330,14 @@ export default function AdminProperties() {
         ) : viewMode === 'card' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sortedProperties.map(property => (
-              <div key={property.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow group flex flex-col">
-                <div className="h-48 bg-slate-100 relative">
+              <div key={property.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all group flex flex-col">
+                <div className="h-44 sm:h-48 w-full bg-slate-100 relative overflow-hidden shrink-0">
                   {property.cover_image_url ? (
-                    <img src={property.cover_image_url} alt={property.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img 
+                      src={property.cover_image_url} 
+                      alt={property.title} 
+                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 block" 
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-300">
                       <span className="material-symbols-outlined text-[32px]">image</span>

@@ -3,7 +3,7 @@ import { uploadImage, getPropertyMedia, setCoverImage, deleteMedia, addVideoUrl,
 import { useToast } from '../../hooks/useToast';
 import ConfirmDialog from '../ConfirmDialog';
 
-export default function MediaSection({ propertyId, coverImageUrl, onCoverChange }) {
+export default function MediaSection({ propertyId, coverImageUrl, onCoverChange, formData, onFieldChange }) {
   const toast = useToast();
   const [mediaList, setMediaList] = useState([]);
   const [loading, setLoading] = useState(false);

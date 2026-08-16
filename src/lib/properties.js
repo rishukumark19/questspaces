@@ -79,25 +79,46 @@ export async function getPublishedProperty(slugOrId) {
 // ADMIN: Fetch ALL properties (including drafts/archived)
 // ─────────────────────────────────────────────────────
 export async function getAllProperties(filters = {}) {
-  if (!supabase) throw new Error('Supabase not configured');
-  let query = supabase
-    .from('properties')
-    .select('id, slug, title, location, developer, seo_title, starting_price, status, publish_state, featured, cover_image_url, updated_at, property_type')
-    .order('updated_at', { ascending: false });
+  if (supabase) {
+    try {
+      let query = supabase
+        .from('properties')
+        .select('id, slug, title, location, developer, seo_title, starting_price, status, publish_state, featured, cover_image_url, updated_at, property_type')
+        .order('updated_at', { ascending: false });
 
+      if (filters.publishState && filters.publishState !== 'All') {
+        query = query.eq('publish_state', filters.publishState);
+      }
+      if (filters.propertyType && filters.propertyType !== 'All') {
+        query = query.eq('property_type', filters.propertyType);
+      }
+      if (filters.search) {
+        query = query.or(`title.ilike.%${filters.search}%,location.ilike.%${filters.search}%`);
+      }
+
+      const { data, error } = await query;
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('Supabase getAllProperties failed, falling back to static data:', err);
+    }
+  }
+
+  // Fallback to static properties formatted for admin
+  let list = [...getLocalCache()];
   if (filters.publishState && filters.publishState !== 'All') {
-    query = query.eq('publish_state', filters.publishState);
+    list = list.filter(p => p.publish_state === filters.publishState);
   }
   if (filters.propertyType && filters.propertyType !== 'All') {
-    query = query.eq('property_type', filters.propertyType);
+    list = list.filter(p => p.property_type === filters.propertyType);
   }
   if (filters.search) {
-    query = query.or(`title.ilike.%${filters.search}%,location.ilike.%${filters.search}%`);
+    const s = filters.search.toLowerCase();
+    list = list.filter(p => 
+      (p.title && p.title.toLowerCase().includes(s)) ||
+      (p.location && p.location.toLowerCase().includes(s))
+    );
   }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data || [];
+  return list;
 }
 
 // Map static camelCase property to Supabase snake_case format for Admin consumption
@@ -128,30 +149,42 @@ export function mapStaticToAdminFormat(staticProp) {
   };
 }
 
+let _localPropertiesCache = null;
+function getLocalCache() {
+  if (!_localPropertiesCache) {
+    _localPropertiesCache = (STATIC_PROPERTIES || []).map(mapStaticToAdminFormat);
+  }
+  return _localPropertiesCache;
+}
+
 // ─────────────────────────────────────────────────────
 // ADMIN: Fetch single property (any state) by ID
 // ─────────────────────────────────────────────────────
 export async function getPropertyById(idOrSlug) {
-  if (!supabase) throw new Error('Supabase not configured');
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+  if (supabase) {
+    try {
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
 
-  let query = supabase
-    .from('properties')
-    .select('*, property_media(id, public_url, is_cover, display_order, media_type, thumbnail_url, storage_path)');
+      let query = supabase
+        .from('properties')
+        .select('*, property_media(id, public_url, is_cover, display_order, media_type, thumbnail_url, storage_path)');
 
-  if (isUUID) {
-    query = query.eq('id', idOrSlug);
-  } else {
-    query = query.eq('slug', idOrSlug);
+      if (isUUID) {
+        query = query.eq('id', idOrSlug);
+      } else {
+        query = query.eq('slug', idOrSlug);
+      }
+
+      const { data, error } = await query.single();
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('Supabase getPropertyById failed, checking static properties:', err);
+    }
   }
 
-  const { data, error } = await query.single();
-  if (error) {
-    const found = STATIC_PROPERTIES.find(p => p.id === idOrSlug || p.slug === idOrSlug);
-    if (found) return mapStaticToAdminFormat(found);
-    throw error;
-  }
-  return data;
+  const found = getLocalCache().find(p => p.id === idOrSlug || p.slug === idOrSlug);
+  if (found) return { ...found };
+  throw new Error(`Property "${idOrSlug}" not found`);
 }
 
 // ─────────────────────────────────────────────────────
@@ -159,14 +192,26 @@ export async function getPropertyById(idOrSlug) {
 // ─────────────────────────────────────────────────────
 export async function createProperty(propertyData) {
   const { property_media, leads_count, id: _id, ...cleanData } = propertyData;
-  const { data, error } = await supabase
-    .from('properties')
-    .insert([{ ...cleanData, publish_state: 'draft' }])
-    .select()
-    .single();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .insert([{ ...cleanData, publish_state: 'draft' }])
+        .select()
+        .single();
 
-  if (error) throw error;
-  return data;
+      if (!error && data) {
+         getLocalCache().unshift({ ...data });
+         return data;
+      }
+    } catch (err) {
+      console.warn('Supabase createProperty failed:', err);
+    }
+  }
+  
+  const newProperty = { ...propertyData, id: Date.now().toString(), publish_state: 'draft', created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+  getLocalCache().unshift({ ...newProperty });
+  return newProperty;
 }
 
 // ─────────────────────────────────────────────────────
@@ -180,20 +225,36 @@ export async function updateProperty(idOrSlug, updates) {
   const targetId = bodyId || idOrSlug;
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId);
 
-  let query = supabase
-    .from('properties')
-    .update({ ...cleanUpdates, updated_at: new Date().toISOString() });
+  if (supabase) {
+    try {
+      let query = supabase
+        .from('properties')
+        .update({ ...cleanUpdates, updated_at: new Date().toISOString() });
 
-  if (isUUID) {
-    query = query.eq('id', targetId);
-  } else {
-    query = query.eq('slug', targetId);
+      if (isUUID) {
+        query = query.eq('id', targetId);
+      } else {
+        query = query.eq('slug', targetId);
+      }
+
+      const { data, error } = await query.select().single();
+      if (!error && data) {
+         const index = getLocalCache().findIndex(p => p.id === targetId || p.slug === targetId);
+         if (index !== -1) getLocalCache()[index] = { ...getLocalCache()[index], ...cleanUpdates, updated_at: new Date().toISOString() };
+         return data;
+      }
+    } catch (err) {
+      console.warn('Supabase updateProperty failed:', err);
+    }
   }
 
-  const { data, error } = await query.select().single();
+  const index = getLocalCache().findIndex(p => p.id === targetId || p.slug === targetId);
+  if (index !== -1) {
+    getLocalCache()[index] = { ...getLocalCache()[index], ...cleanUpdates, updated_at: new Date().toISOString() };
+    return { ...getLocalCache()[index] };
+  }
 
-  if (error) throw error;
-  return data;
+  return { ...updates, id: targetId, updated_at: new Date().toISOString() };
 }
 
 // ─────────────────────────────────────────────────────
@@ -257,7 +318,14 @@ export async function duplicateProperty(id) {
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.warn('Supabase duplicateProperty failed, duplicating locally:', error);
+    const newLocalProp = { ...duplicatedData, id: Date.now().toString(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    getLocalCache().unshift({ ...newLocalProp });
+    return newLocalProp;
+  }
+  
+  getLocalCache().unshift({ ...data });
   return data;
 }
 
@@ -265,25 +333,45 @@ export async function duplicateProperty(id) {
 // ADMIN: Delete property (hard delete — media cascades via FK)
 // ─────────────────────────────────────────────────────
 export async function deleteProperty(id) {
-  const { error } = await supabase.from('properties').delete().eq('id', id);
-  if (error) throw error;
+  if (supabase) {
+    try {
+      const { error } = await supabase.from('properties').delete().eq('id', id);
+      if (error) console.warn('Supabase delete error:', error);
+    } catch (err) {}
+  }
+  const index = getLocalCache().findIndex(p => p.id === id || p.slug === id);
+  if (index !== -1) getLocalCache().splice(index, 1);
 }
 
 // ─────────────────────────────────────────────────────
 // ADMIN: Dashboard stats
 // ─────────────────────────────────────────────────────
 export async function getPropertyStats() {
-  const { data, error } = await supabase
-    .from('properties')
-    .select('publish_state, featured');
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('publish_state, featured');
 
-  if (error) throw error;
+      if (!error && data) {
+        const total = data.length;
+        const published = data.filter(p => p.publish_state === 'published').length;
+        const drafts = data.filter(p => p.publish_state === 'draft').length;
+        const archived = data.filter(p => p.publish_state === 'archived').length;
+        const featured = data.filter(p => p.featured).length;
+
+        return { total, published, drafts, archived, featured };
+      }
+    } catch (err) {
+      console.warn('Supabase getPropertyStats failed, using static counts:', err);
+    }
+  }
   
-  const total = data.length;
-  const published = data.filter(p => p.publish_state === 'published').length;
-  const drafts = data.filter(p => p.publish_state === 'draft').length;
-  const archived = data.filter(p => p.publish_state === 'archived').length;
-  const featured = data.filter(p => p.featured).length;
+  const total = STATIC_PROPERTIES.length;
+  const published = STATIC_PROPERTIES.length;
+  const drafts = 0;
+  const archived = 0;
+  const featured = STATIC_PROPERTIES.filter(p => p.featured).length;
 
   return { total, published, drafts, archived, featured };
 }

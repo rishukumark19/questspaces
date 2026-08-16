@@ -1,4 +1,4 @@
-﻿import supabase from './supabase.js';
+import supabase from './supabase.js';
 
 // ─────────────────────────────────────────────────────
 // Upload an image file to Supabase Storage
@@ -82,14 +82,20 @@ export async function addVideoUrl(propertyId, videoUrl, thumbnailUrl = null) {
 // Get all media for a property (ordered)
 // ─────────────────────────────────────────────────────
 export async function getPropertyMedia(propertyId) {
-  const { data, error } = await supabase
-    .from('property_media')
-    .select('*')
-    .eq('property_id', propertyId)
-    .order('display_order', { ascending: true });
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('property_media')
+        .select('*')
+        .eq('property_id', propertyId)
+        .order('display_order', { ascending: true });
 
-  if (error) throw error;
-  return data || [];
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('Supabase getPropertyMedia failed:', err);
+    }
+  }
+  return [];
 }
 
 // ─────────────────────────────────────────────────────
