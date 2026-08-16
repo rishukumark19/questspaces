@@ -159,16 +159,17 @@ export default function LeadDetailDrawer({ lead, isOpen, onClose, onStatusChange
                 )}
               </div>
               <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
-                <a href={`tel:${lead.phone}`} className="flex-1 flex items-center justify-center gap-2 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-medium transition-colors">
-                  <span className="material-symbols-outlined text-[16px]">call</span> Call
+                <a href={`tel:${lead.phone}`} style={{ color: '#ffffff' }} className="flex-1 flex items-center justify-center gap-2 py-2 bg-slate-900 hover:bg-slate-800 rounded-lg text-sm font-medium transition-colors">
+                  <span className="material-symbols-outlined text-[16px]" style={{ color: '#ffffff' }}>call</span> Call
                 </a>
                 <a 
                   href={`https://wa.me/${lead.phone?.replace(/\D/g, '')}?text=Hi%20${encodeURIComponent(lead.name.split(' ')[0])},%20I'm%20reaching%20out%20regarding%20your%20inquiry.`} 
                   target="_blank" 
                   rel="noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-lg text-sm font-medium transition-colors"
+                  style={{ color: '#ffffff' }}
+                  className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#25D366] hover:bg-[#20bd5a] rounded-lg text-sm font-medium transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[16px]">forum</span> WhatsApp
+                  <span className="material-symbols-outlined text-[16px]" style={{ color: '#ffffff' }}>forum</span> WhatsApp
                 </a>
               </div>
             </div>

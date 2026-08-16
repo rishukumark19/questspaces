@@ -97,7 +97,10 @@ export async function getAllProperties(filters = {}) {
       }
 
       const { data, error } = await query;
-      if (!error && data) return data;
+      if (!error && data) {
+        if (Array.isArray(data) && data.length === 0) throw new Error('Empty DB, use fallback');
+        return data;
+      }
     } catch (err) {
       console.warn('Supabase getAllProperties failed, falling back to static data:', err);
     }
@@ -153,6 +156,32 @@ let _localPropertiesCache = null;
 function getLocalCache() {
   if (!_localPropertiesCache) {
     _localPropertiesCache = (STATIC_PROPERTIES || []).map(mapStaticToAdminFormat);
+    
+    // Add some dummy drafts for demo purposes
+    _localPropertiesCache.push({
+      id: 'dummy-draft-1',
+      title: 'Godrej Woods',
+      slug: 'godrej-woods',
+      developer: 'Godrej Properties',
+      location: 'Noida',
+      publish_state: 'draft',
+      featured: false,
+      property_type: 'Apartment',
+      created_at: new Date(Date.now() - 86400000).toISOString(),
+      updated_at: new Date(Date.now() - 86400000).toISOString()
+    });
+    _localPropertiesCache.push({
+      id: 'dummy-draft-2',
+      title: 'Prestige Lakeside Habitat',
+      slug: 'prestige-lakeside-habitat',
+      developer: 'Prestige Group',
+      location: 'Bangalore',
+      publish_state: 'draft',
+      featured: false,
+      property_type: 'Villa',
+      created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+      updated_at: new Date(Date.now() - 86400000 * 2).toISOString()
+    });
   }
   return _localPropertiesCache;
 }
@@ -354,6 +383,7 @@ export async function getPropertyStats() {
         .select('publish_state, featured');
 
       if (!error && data) {
+        if (data.length === 0) throw new Error('Empty DB, use fallback');
         const total = data.length;
         const published = data.filter(p => p.publish_state === 'published').length;
         const drafts = data.filter(p => p.publish_state === 'draft').length;
@@ -367,11 +397,12 @@ export async function getPropertyStats() {
     }
   }
   
-  const total = STATIC_PROPERTIES.length;
-  const published = STATIC_PROPERTIES.length;
-  const drafts = 0;
-  const archived = 0;
-  const featured = STATIC_PROPERTIES.filter(p => p.featured).length;
+  const all = getLocalCache();
+  const total = all.length;
+  const published = all.filter(p => p.publish_state === 'published').length;
+  const drafts = all.filter(p => p.publish_state === 'draft').length;
+  const archived = all.filter(p => p.publish_state === 'archived').length;
+  const featured = all.filter(p => p.featured).length;
 
   return { total, published, drafts, archived, featured };
 }

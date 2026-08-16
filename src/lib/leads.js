@@ -45,6 +45,39 @@ const DUMMY_LEADS = [
     message: 'Looking for investment options in Hebbal.',
     status: 'Contacted',
     created_at: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    id: '3',
+    name: 'Vikram Singh',
+    phone: '+91 99887 76655',
+    email: 'vikram.singh@gmail.com',
+    property_title: 'Aeropolis Plots',
+    lead_type: 'Site Visit',
+    message: 'Can I visit the site this weekend?',
+    status: 'New',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: '4',
+    name: 'Priya Sharma',
+    phone: '+91 98765 43210',
+    email: 'priya.sharma@design.co',
+    property_title: 'Visista Villas',
+    lead_type: 'General Inquiry',
+    message: 'What is the exact possession date?',
+    status: 'Closed',
+    created_at: new Date(Date.now() - 86400000 * 5).toISOString()
+  },
+  {
+    id: '5',
+    name: 'Amit Kumar',
+    phone: '+91 91234 56789',
+    email: 'amit.k@startup.io',
+    property_title: 'Lodha Mirabelle',
+    lead_type: 'Brochure Download',
+    message: '',
+    status: 'Closed',
+    created_at: new Date(Date.now() - 86400000 * 10).toISOString()
   }
 ];
 
@@ -78,7 +111,10 @@ export async function getAllLeads(filters = {}) {
       }
 
       const { data, error } = await query;
-      if (!error && data) return data;
+      if (!error && data) {
+        if (Array.isArray(data) && data.length === 0) throw new Error('Empty DB, use fallback');
+        return data;
+      }
     } catch (err) {
       console.warn('Supabase getAllLeads failed, falling back to local storage:', err);
     }
