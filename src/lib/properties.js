@@ -267,30 +267,30 @@ export async function getPropertyById(idOrSlug) {
 // ─────────────────────────────────────────────────────
 export async function createProperty(propertyData) {
   const { property_media, leads_count, id: _id, ...cleanData } = propertyData;
-  if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('properties')
-        .insert([{ ...cleanData, publish_state: 'draft' }])
-        .select()
-        .single();
+  if (!supabase) {
+    throw new Error('Supabase is not configured. Cannot create properties offline.');
+  }
 
-      if (!error && data) {
-         const cache = getLocalCache();
-         cache.unshift({ ...data });
-         saveLocalCache(cache);
-         return data;
-      }
-    } catch (err) {
-      console.warn('Supabase createProperty failed:', err);
-    }
+  const { data, error } = await supabase
+    .from('properties')
+    .insert([{ ...cleanData, publish_state: 'draft' }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Supabase createProperty error:', error);
+    throw new Error(error.message || 'Failed to create property in database');
+  }
+
+  // Save to local cache as well so it's instantly available without refetch
+  if (data) {
+    const cache = getLocalCache();
+    cache.unshift({ ...data });
+    saveLocalCache(cache);
+    return data;
   }
   
-  const newProperty = { ...propertyData, id: Date.now().toString(), publish_state: 'draft', created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
-  const cache = getLocalCache();
-  cache.unshift({ ...newProperty });
-  saveLocalCache(cache);
-  return newProperty;
+  throw new Error('Failed to create property');
 }
 
 // ─────────────────────────────────────────────────────

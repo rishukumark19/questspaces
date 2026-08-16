@@ -273,34 +273,43 @@ export default function AdminDashboard() {
                 <span className="material-symbols-outlined text-primary text-[18px]">monitor_heart</span>
                 Portfolio Health
               </h3>
-              <div className="flex-1 flex items-center justify-center gap-6">
-                <div className="relative w-32 h-32 flex items-center justify-center shrink-0">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                    {/* Background Circle */}
-                    <path className="text-slate-100" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    {/* Published Segment */}
-                    <path className="text-emerald-500 transition-all duration-1000" strokeDasharray={`${(stats?.published / (stats?.published + stats?.drafts || 1)) * 100 || 0}, 100`} strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  </svg>
-                  <div className="absolute text-center flex flex-col items-center">
-                    <span className="text-3xl font-bold text-slate-900 leading-none">{stats?.published || 0}</span>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 mt-1">Live</span>
+              {(() => {
+                const total = (stats?.total) || 1;
+                const pubPct = ((stats?.published || 0) / total) * 100;
+                const draftPct = ((stats?.drafts || 0) / total) * 100;
+                return (
+                  <div className="flex-1 flex items-center justify-center gap-6">
+                    <div className="relative w-32 h-32 flex items-center justify-center shrink-0">
+                      <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                        {/* Background Circle */}
+                        <path className="text-slate-100" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        {/* Drafts Segment (amber) — rendered first so published sits on top */}
+                        {draftPct > 0 && (
+                          <path className="text-amber-400 transition-all duration-1000" strokeDasharray={`${draftPct}, 100`} strokeDashoffset={`-${pubPct}`} strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        )}
+                        {/* Published Segment (green) — starts at 0 */}
+                        {pubPct > 0 && (
+                          <path className="text-emerald-500 transition-all duration-1000" strokeDasharray={`${pubPct}, 100`} strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        )}
+                      </svg>
+                      <div className="absolute text-center flex flex-col items-center">
+                        <span className="text-3xl font-bold text-slate-900 leading-none">{stats?.total || 0}</span>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 mt-1">Total</span>
+                      </div>
+                    </div>
+                    <div className="space-y-3 flex-1">
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span className="flex items-center gap-1.5 text-slate-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span>Published</span>
+                        <span className="text-slate-900">{stats?.published || 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span className="flex items-center gap-1.5 text-slate-600"><span className="w-2 h-2 rounded-full bg-amber-400"></span>Drafts</span>
+                        <span className="text-slate-900">{stats?.drafts || 0}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-3 flex-1">
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="flex items-center gap-1.5 text-slate-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span>Published</span>
-                    <span className="text-slate-900">{stats?.published || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="flex items-center gap-1.5 text-slate-600"><span className="w-2 h-2 rounded-full bg-amber-300"></span>Drafts</span>
-                    <span className="text-slate-900">{stats?.drafts || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="flex items-center gap-1.5 text-slate-600"><span className="w-2 h-2 rounded-full bg-red-400"></span>Incomplete</span>
-                    <span className="text-slate-900">{incompleteDraftsTotal}</span>
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
             </div>
 
           </div>
