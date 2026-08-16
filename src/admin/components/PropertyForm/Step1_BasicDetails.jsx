@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 export default function Step1_BasicDetails({ formData, onChange, onHighlightsChange, onBadgesChange, missingFields = [] }) {
-  const propertyTypes = ['Luxury Apartment', 'Modern Villa', 'Row House', 'Investment Plot'];
+  const propertyTypes = ['Luxury Apartment', 'Modern Villa', 'Row House', 'Investment Plot', 'Commercial Space', 'Office Space', 'Studio Apartment', 'Penthouse', 'Duplex'];
   
   const micromarkets = [
     { value: 'Hebbal', label: 'Hebbal Airport Corridor' },
@@ -17,6 +17,9 @@ export default function Step1_BasicDetails({ formData, onChange, onHighlightsCha
   const badgeSuggestions = ["New Launch", "Featured Luxury", "Price Drop", "Sold Out", "Limited Units"];
 
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showDeveloper, setShowDeveloper] = useState(false);
+  const [newHighlight, setNewHighlight] = useState('');
+  const [newBadge, setNewBadge] = useState('');
 
   const handleMicromarketSelect = (e) => {
     const val = e.target.value;
@@ -24,6 +27,8 @@ export default function Step1_BasicDetails({ formData, onChange, onHighlightsCha
     onChange('micromarket', val);
     if (selected) {
       onChange('micromarket_label', selected.label);
+    } else {
+      onChange('micromarket_label', val);
     }
   };
 
@@ -125,6 +130,21 @@ export default function Step1_BasicDetails({ formData, onChange, onHighlightsCha
 
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              Construction Status <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={formData.construction_status || 'Under Construction'}
+              onChange={(e) => onChange('construction_status', e.target.value)}
+              className={`w-full bg-slate-50 border ${missingFields.includes('Construction status') ? 'border-red-500 bg-red-50' : 'border-slate-200'} rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary focus:bg-white`}
+            >
+              <option value="New Launch">New Launch</option>
+              <option value="Under Construction">Under Construction</option>
+              <option value="Ready to Move">Ready to Move</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
               Display Starting Price <span className="text-red-500">*</span>
             </label>
             <input
@@ -186,63 +206,74 @@ export default function Step1_BasicDetails({ formData, onChange, onHighlightsCha
 
       {/* Developer / Builder Profile */}
       <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-5">
-        <h3 className="text-lg font-bold text-slate-900 border-b pb-3 flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary">business_center</span> Developer / Builder Profile
-        </h3>
-        <p className="text-xs text-slate-500 -mt-2">Shown in the "About Builder" section on the property detail page.</p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="flex items-center justify-between border-b pb-3 cursor-pointer group" onClick={() => setShowDeveloper(!showDeveloper)}>
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Experience</label>
-            <input
-              type="text"
-              value={formData.developer_experience || ''}
-              onChange={(e) => onChange('developer_experience', e.target.value)}
-              placeholder="e.g. 33+ Years"
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary focus:bg-white"
-            />
-            <p className="text-[11px] text-slate-400 mt-1">Shown as a stat badge on the detail page.</p>
+            <h3 className="text-lg font-bold text-slate-900 group-hover:text-primary transition-colors flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">business_center</span> Developer / Builder Profile
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">Optional enrichment details like experience and logo.</p>
           </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Projects Delivered</label>
-            <input
-              type="text"
-              value={formData.developer_projects_count || ''}
-              onChange={(e) => onChange('developer_projects_count', e.target.value)}
-              placeholder="e.g. 150+ Projects"
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary focus:bg-white"
-            />
-          </div>
+          <button type="button" className="text-slate-400 group-hover:text-primary transition-colors">
+            <span className="material-symbols-outlined">{showDeveloper ? 'expand_less' : 'expand_more'}</span>
+          </button>
         </div>
 
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Developer Logo URL</label>
-          <div className="flex gap-3 items-center">
-            <input
-              type="url"
-              value={formData.developer_logo_url || ''}
-              onChange={(e) => onChange('developer_logo_url', e.target.value)}
-              placeholder="https://... paste logo image URL"
-              className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary focus:bg-white"
-            />
-            {formData.developer_logo_url && (
-              <div className="w-12 h-12 border border-slate-200 rounded-lg overflow-hidden shrink-0 bg-white flex items-center justify-center">
-                <img src={formData.developer_logo_url} alt="Developer logo" className="max-w-full max-h-full object-contain p-1" onError={(e) => { e.target.style.display = 'none'; }} />
+        {showDeveloper && (
+          <div className="space-y-5 animate-in slide-in-from-top-2 fade-in duration-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Experience</label>
+                <input
+                  type="text"
+                  value={formData.developer_experience || ''}
+                  onChange={(e) => onChange('developer_experience', e.target.value)}
+                  placeholder="e.g. 33+ Years"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary focus:bg-white"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Shown as a stat badge on the detail page.</p>
               </div>
-            )}
-          </div>
-        </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Projects Delivered</label>
+                <input
+                  type="text"
+                  value={formData.developer_projects_count || ''}
+                  onChange={(e) => onChange('developer_projects_count', e.target.value)}
+                  placeholder="e.g. 150+ Projects"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary focus:bg-white"
+                />
+              </div>
+            </div>
 
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Developer Bio</label>
-          <textarea
-            rows={3}
-            value={formData.developer_description || ''}
-            onChange={(e) => onChange('developer_description', e.target.value)}
-            placeholder="Brief 2-4 sentence description of the developer's track record, reputation, and key achievements..."
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm outline-none focus:border-primary focus:bg-white"
-          />
-        </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Developer Logo URL</label>
+              <div className="flex gap-3 items-center">
+                <input
+                  type="url"
+                  value={formData.developer_logo_url || ''}
+                  onChange={(e) => onChange('developer_logo_url', e.target.value)}
+                  placeholder="https://... paste logo image URL"
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary focus:bg-white"
+                />
+                {formData.developer_logo_url && (
+                  <div className="w-12 h-12 border border-slate-200 rounded-lg overflow-hidden shrink-0 bg-white flex items-center justify-center">
+                    <img src={formData.developer_logo_url} alt="Developer logo" className="max-w-full max-h-full object-contain p-1" onError={(e) => { e.target.style.display = 'none'; }} />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Developer Bio</label>
+              <textarea
+                rows={3}
+                value={formData.developer_description || ''}
+                onChange={(e) => onChange('developer_description', e.target.value)}
+                placeholder="Brief 2-4 sentence description of the developer's track record, reputation, and key achievements..."
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm outline-none focus:border-primary focus:bg-white"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <hr className="border-slate-200" />
@@ -258,16 +289,18 @@ export default function Step1_BasicDetails({ formData, onChange, onHighlightsCha
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
               Micromarket Hub <span className="text-red-500">*</span>
             </label>
-            <select
+            <input
+              list="micromarkets-list"
               value={formData.micromarket || ''}
               onChange={handleMicromarketSelect}
+              placeholder="Select or type a micromarket..."
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary focus:bg-white"
-            >
-              <option value="">Select Micromarket...</option>
+            />
+            <datalist id="micromarkets-list">
               {micromarkets.map(m => (
-                <option key={m.value} value={m.value}>{m.value}</option>
+                <option key={m.value} value={m.value}>{m.label}</option>
               ))}
-            </select>
+            </datalist>
           </div>
 
           <div>
@@ -321,9 +354,96 @@ export default function Step1_BasicDetails({ formData, onChange, onHighlightsCha
         </div>
       </div>
 
+      {/* 3. Highlights & Badges */}
+      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-6">
+        <h3 className="text-lg font-bold text-slate-900 border-b pb-3 flex items-center gap-2">
+          <span className="material-symbols-outlined text-primary">stars</span> Highlights & Badges
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+              Property Highlights (Cards)
+            </label>
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={newHighlight}
+                onChange={(e) => setNewHighlight(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddHighlight(newHighlight); setNewHighlight(''); } }}
+                placeholder="e.g. Near Metro Station"
+                className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+              <button 
+                type="button"
+                onClick={() => { handleAddHighlight(newHighlight); setNewHighlight(''); }}
+                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs"
+              >
+                Add
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {(formData.highlights || []).map((hl, i) => (
+                <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-semibold">
+                  {hl}
+                  <button type="button" onClick={() => handleRemoveHighlight(i)} className="hover:text-red-500"><span className="material-symbols-outlined text-[14px]">close</span></button>
+                </span>
+              ))}
+            </div>
+            <div className="text-[10px] text-slate-500 mb-1 uppercase font-bold tracking-wider">Suggestions</div>
+            <div className="flex flex-wrap gap-1.5">
+              {highlightSuggestions.map(sg => (
+                <button key={sg} type="button" onClick={() => handleAddHighlight(sg)} className="px-2 py-0.5 border border-slate-200 rounded text-[10px] text-slate-600 hover:bg-slate-50 hover:border-slate-300">
+                  + {sg}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+              Status Badges
+            </label>
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={newBadge}
+                onChange={(e) => setNewBadge(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddBadge(newBadge); setNewBadge(''); } }}
+                placeholder="e.g. Price Drop"
+                className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+              <button 
+                type="button"
+                onClick={() => { handleAddBadge(newBadge); setNewBadge(''); }}
+                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs"
+              >
+                Add
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {(formData.badges || []).map((bd, i) => (
+                <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-semibold border border-amber-200">
+                  {bd}
+                  <button type="button" onClick={() => handleRemoveBadge(i)} className="hover:text-red-500"><span className="material-symbols-outlined text-[14px]">close</span></button>
+                </span>
+              ))}
+            </div>
+            <div className="text-[10px] text-slate-500 mb-1 uppercase font-bold tracking-wider">Suggestions</div>
+            <div className="flex flex-wrap gap-1.5">
+              {badgeSuggestions.map(sg => (
+                <button key={sg} type="button" onClick={() => handleAddBadge(sg)} className="px-2 py-0.5 border border-slate-200 rounded text-[10px] text-slate-600 hover:bg-slate-50 hover:border-slate-300">
+                  + {sg}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <hr className="border-slate-200" />
 
-      {/* 3. Advanced / Internal Details */}
+      {/* 4. Advanced / Internal Details */}
       <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-6">
         <div className="flex items-center justify-between border-b pb-3 cursor-pointer group" onClick={() => setShowAdvanced(!showAdvanced)}>
           <h3 className="text-lg font-bold text-slate-900 group-hover:text-primary transition-colors flex items-center gap-2">

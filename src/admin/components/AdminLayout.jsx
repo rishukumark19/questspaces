@@ -54,7 +54,6 @@ export default function AdminLayout() {
     { name: 'Home', path: '/admin', icon: 'home' },
     { name: 'My Listings', path: '/admin/properties', icon: 'apartment' },
     { name: 'Client Inquiries', path: '/admin/leads', icon: 'person_raised_hand', badge: unreadLeads },
-    { name: 'Insights', path: '/admin/insights', icon: 'article' },
     { name: 'Testimonials', path: '/admin/testimonials', icon: 'format_quote' },
   ];
 

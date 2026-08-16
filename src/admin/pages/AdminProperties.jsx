@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getAllProperties, publishProperty, unpublishProperty, deleteProperty, duplicateProperty, updateProperty, normalizePrice } from '../../lib/properties';
+import { getAllProperties, publishProperty, unpublishProperty, deleteProperty, duplicateProperty, updateProperty, normalizePrice, validateForPublish } from '../../lib/properties';
 import StatusBadge from '../components/StatusBadge';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../hooks/useToast';
@@ -329,7 +329,9 @@ export default function AdminProperties() {
           </div>
         ) : viewMode === 'card' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedProperties.map(property => (
+            {sortedProperties.map(property => {
+              const validation = property.publish_state === 'draft' ? validateForPublish(property) : { valid: true, missing: [] };
+              return (
               <div key={property.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all group flex flex-col">
                 <div className="h-44 sm:h-48 w-full bg-slate-100 relative overflow-hidden shrink-0">
                   {property.cover_image_url ? (
@@ -383,6 +385,19 @@ export default function AdminProperties() {
                     <div className="font-bold text-xl text-slate-800 mb-4">{normalizePrice(property.starting_price) || 'Price TBD'}</div>
                   </div>
                   
+                  {!validation.valid && (
+                    <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                      <div className="flex items-center gap-1.5 text-amber-700 text-[11px] font-bold uppercase tracking-wider mb-1.5">
+                        <span className="material-symbols-outlined text-[14px]">warning</span> Needs details
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {validation.missing.map(m => (
+                          <span key={m} className="px-1.5 py-0.5 bg-amber-100/50 text-amber-800 border border-amber-200/50 rounded text-[10px] font-semibold">{m}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="pt-4 border-t border-slate-100 flex items-center justify-between mt-auto">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600" title="Total Leads">
                       <div className="bg-slate-100 w-6 h-6 rounded-full flex items-center justify-center text-slate-500">
@@ -417,7 +432,7 @@ export default function AdminProperties() {
                   </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         ) : (
           <div className="overflow-x-auto min-h-[400px]">
@@ -442,7 +457,9 @@ export default function AdminProperties() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {sortedProperties.map((property) => (
+                {sortedProperties.map((property) => {
+                  const validation = property.publish_state === 'draft' ? validateForPublish(property) : { valid: true, missing: [] };
+                  return (
                   <tr key={property.id} className={`hover:bg-slate-50/50 transition-colors group ${selectedPropertyIds.has(property.id) ? 'bg-primary/5' : ''}`}>
                     <td className="py-4 px-4 text-center">
                       <input 
@@ -480,6 +497,13 @@ export default function AdminProperties() {
                           <div className="text-xs text-slate-500 flex flex-col gap-0.5 mt-1">
                             <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">location_on</span> {property.location || 'Location missing'}</span>
                           </div>
+                          {!validation.valid && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {validation.missing.map(m => (
+                                <span key={m} className="px-1.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200/50 rounded text-[9px] font-semibold tracking-wide uppercase">{m} missing</span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -527,7 +551,7 @@ export default function AdminProperties() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>

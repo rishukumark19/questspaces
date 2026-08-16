@@ -157,7 +157,7 @@ export default function AdminPropertyEdit() {
     { id: 'step2', label: '2. Units & Pricing', icon: 'architecture' },
     { id: 'step3', label: '3. Amenities & Extras', icon: 'pool' },
     { id: 'step4', label: '4. Photos & Media', icon: 'image' },
-    { id: 'step5', label: '5. Advanced (Phase 3)', icon: 'bolt' },
+    { id: 'step5', label: '5. Extra Details', icon: 'bolt' },
   ];
 
   if (loading) {

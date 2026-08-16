@@ -26,7 +26,7 @@ export default function AdminDashboard() {
   
   const [incompleteDrafts, setIncompleteDrafts] = useState([]);
   const [incompleteDraftsTotal, setIncompleteDraftsTotal] = useState(0);
-  const [hideNeedsAttention, setHideNeedsAttention] = useState(sessionStorage.getItem('hideNeedsAttention') === 'true');
+  const [hideNeedsAttention, setHideNeedsAttention] = useState(false);
   
   const [activityTimeline, setActivityTimeline] = useState([]);
   
@@ -227,57 +227,6 @@ export default function AdminDashboard() {
         {/* Left Column (Nudges & Quick Actions) */}
         <div className="lg:col-span-2 space-y-8">
           
-          {/* Property Completion Nudges */}
-          {!hideNeedsAttention && incompleteDrafts.length > 0 && (
-            <div className="animate-in fade-in slide-in-from-top-4 duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-headline-md font-bold text-xl text-slate-800 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-amber-500">warning</span>
-                  Needs Attention ({incompleteDraftsTotal})
-                </h2>
-                <button 
-                  onClick={() => {
-                    setHideNeedsAttention(true);
-                    sessionStorage.setItem('hideNeedsAttention', 'true');
-                  }}
-                  className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors bg-white px-3 py-1.5 rounded-lg border border-slate-200"
-                >
-                  Hide for now
-                </button>
-              </div>
-              <div className="space-y-3">
-                {incompleteDrafts.map(draft => (
-                  <div key={draft.id} className="bg-amber-50 rounded-2xl p-4 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <span className="material-symbols-outlined text-amber-500 mt-0.5">error</span>
-                      <div>
-                        <div className="font-bold text-slate-900 text-sm mb-1">"{draft.title}" is missing details</div>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {draft.validation.missing.map(m => (
-                            <span key={m} className="px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded text-[10px] font-bold uppercase tracking-wider">{m}</span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <Link 
-                      to={`/admin/properties/${draft.id}/edit`}
-                      className="shrink-0 bg-white border border-amber-300 hover:bg-amber-100 text-amber-800 px-4 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm"
-                    >
-                      Complete it &rarr;
-                    </Link>
-                  </div>
-                ))}
-                {incompleteDraftsTotal > 3 && (
-                  <div className="text-center mt-2">
-                    <Link to="/admin/properties" className="text-xs font-bold text-primary hover:underline">
-                      View all {incompleteDraftsTotal} drafts
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Health & Funnel Widgets */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
@@ -390,6 +339,22 @@ export default function AdminDashboard() {
         {/* Right Column (Recent Inquiries & Activity) */}
         <div className="space-y-8">
           
+          {/* Minimal Needs Attention Widget */}
+          {incompleteDraftsTotal > 0 && (
+            <Link to="/admin/properties?publishState=draft" className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between hover:bg-amber-100 hover:border-amber-300 transition-colors group shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                  <span className="material-symbols-outlined text-[18px]">error</span>
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-slate-900 leading-none">{incompleteDraftsTotal} {incompleteDraftsTotal === 1 ? 'property requires' : 'properties require'} attention</div>
+                  <div className="text-[10px] text-amber-700 font-medium mt-1">Missing details to publish</div>
+                </div>
+              </div>
+              <span className="material-symbols-outlined text-amber-500 text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            </Link>
+          )}
+
           {/* Recent Inquiries */}
           <div>
             <h2 className="font-headline-md font-bold text-xl text-slate-800 mb-4 flex items-center gap-2">

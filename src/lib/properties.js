@@ -45,7 +45,7 @@ export async function getPublishedProperties(filters = {}) {
 
   const { data, error } = await query;
   if (error) throw error;
-  return data || [];
+  return (data || []).map(p => ({ ...p, starting_price: normalizePrice(p.starting_price) }));
 }
 
 // ─────────────────────────────────────────────────────
@@ -69,10 +69,10 @@ export async function getPublishedProperty(slugOrId) {
   const { data, error } = await query.single();
   if (error) {
     const found = STATIC_PROPERTIES.find(p => p.slug === slugOrId || p.id === slugOrId);
-    if (found) return found;
+    if (found) return { ...found, starting_price: normalizePrice(found.starting_price) };
     throw error;
   }
-  return data;
+  return { ...data, starting_price: normalizePrice(data.starting_price) };
 }
 
 // ─────────────────────────────────────────────────────
@@ -99,7 +99,7 @@ export async function getAllProperties(filters = {}) {
       const { data, error } = await query;
       if (!error && data) {
         if (Array.isArray(data) && data.length === 0) throw new Error('Empty DB, use fallback');
-        return data;
+        return data.map(p => ({ ...p, starting_price: normalizePrice(p.starting_price) }));
       }
     } catch (err) {
       console.warn('Supabase getAllProperties failed, falling back to static data:', err);
@@ -130,7 +130,7 @@ export function mapStaticToAdminFormat(staticProp) {
   return {
     ...staticProp,
     property_type: staticProp.propertyType,
-    starting_price: staticProp.startingPrice,
+    starting_price: normalizePrice(staticProp.startingPrice),
     price_value: staticProp.priceValue,
     price_per_sqft: staticProp.pricePerSqFt,
     bhk_options: staticProp.bhkOptions,
@@ -205,14 +205,14 @@ export async function getPropertyById(idOrSlug) {
       }
 
       const { data, error } = await query.single();
-      if (!error && data) return data;
+      if (!error && data) return { ...data, starting_price: normalizePrice(data.starting_price) };
     } catch (err) {
       console.warn('Supabase getPropertyById failed, checking static properties:', err);
     }
   }
 
   const found = getLocalCache().find(p => p.id === idOrSlug || p.slug === idOrSlug);
-  if (found) return { ...found };
+  if (found) return { ...found, starting_price: normalizePrice(found.starting_price) };
   throw new Error(`Property "${idOrSlug}" not found`);
 }
 

@@ -13,6 +13,8 @@ export default function AdminPropertyPreview() {
   const [activeImage, setActiveImage] = useState('');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
+  useDocumentTitle('Preview Property');
+
   const fetchProperty = async () => {
     setLoading(true);
     try {
@@ -66,8 +68,6 @@ export default function AdminPropertyPreview() {
   const highlights = property.highlights || [];
   const amenities = property.amenities || [];
   const proximity = property.proximity || [];
-
-  useDocumentTitle('Preview Property');
 
   return (
     <div>
