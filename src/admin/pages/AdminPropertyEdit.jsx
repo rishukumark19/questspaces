@@ -98,20 +98,43 @@ export default function AdminPropertyEdit() {
     }
   };
 
-  // 4.1 Auto-Save (60 seconds)
+  // Instant Debounced Auto-Save (1.5 seconds after typing stops)
   useEffect(() => {
-    if (isSaving || !formData?.title || !lastSavedData) return;
+    if (isSaving || !formData || !lastSavedData) return;
     const hasUnsavedChanges = lastSavedData !== JSON.stringify(formData);
     if (!hasUnsavedChanges) return;
 
     const timer = setTimeout(() => {
-      handleSave(false, true); // silent auto-save
-      toast.info('Auto-saved changes', { duration: 2000 });
-    }, 60000);
+      handleSave(false, true); // silent seamless auto-save
+    }, 1500);
     return () => clearTimeout(timer);
   }, [formData, lastSavedData, isSaving]);
 
-  // 4.2 Keyboard Shortcut (Ctrl+S)
+  // Handle Tab Switching with Auto-Save
+  const handleTabChange = async (tabId) => {
+    if (formData && lastSavedData !== JSON.stringify(formData)) {
+      await handleSave(false, true);
+    }
+    setActiveTab(tabId);
+  };
+
+  // Handle Preview Navigation with Guaranteed Instant Save
+  const handleNavigateToPreview = async () => {
+    if (formData && lastSavedData !== JSON.stringify(formData)) {
+      setIsSaving(true);
+      try {
+        await updateProperty(id, formData);
+        setLastSavedData(JSON.stringify(formData));
+      } catch (err) {
+        console.warn('Auto-save before preview:', err);
+      } finally {
+        setIsSaving(false);
+      }
+    }
+    navigate(`/admin/properties/${id}/preview`);
+  };
+
+  // Keyboard Shortcut (Ctrl+S / Cmd+S)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -208,14 +231,21 @@ export default function AdminPropertyEdit() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {hasUnsavedChanges && (
-            <span className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 shadow-sm flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px]">warning</span> Unsaved changes
+          {/* Live Auto-Save Status Indicator */}
+          {isSaving ? (
+            <span className="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 shadow-sm flex items-center gap-1.5">
+              <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              Saving changes...
             </span>
-          )}
-          {lastSavedTime && !hasUnsavedChanges && (
-            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 shadow-sm flex items-center gap-1.5 hidden sm:flex">
-              <span className="material-symbols-outlined text-[16px]">check_circle</span> Saved {lastSavedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          ) : hasUnsavedChanges ? (
+            <span className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 shadow-sm flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              Unsaved changes
+            </span>
+          ) : (
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 shadow-sm flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[15px] text-emerald-600">check_circle</span>
+              All changes saved
             </span>
           )}
           
@@ -223,7 +253,7 @@ export default function AdminPropertyEdit() {
           <button
             type="button"
             onClick={() => setShowPublishSettings(true)}
-            className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-xl transition-colors flex items-center gap-1.5 shadow-sm"
+            className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-xl transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
           >
             <span className="material-symbols-outlined text-[18px]">settings</span> Advanced Settings
           </button>
@@ -240,20 +270,21 @@ export default function AdminPropertyEdit() {
             </Link>
           )}
 
-          <Link
-            to={`/admin/properties/${id}/preview`}
-            className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-xl transition-colors flex items-center gap-1.5 shadow-sm"
+          <button
+            type="button"
+            onClick={handleNavigateToPreview}
+            className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-xl transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
           >
             <span className="material-symbols-outlined text-[18px]">visibility</span> Preview
-          </Link>
+          </button>
           
           <button
             type="button"
             onClick={() => handleSave(true)}
             disabled={isSaving}
-            className="px-8 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm rounded-xl shadow-sm transition-colors disabled:opacity-50"
+            className="px-6 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm rounded-xl shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
           >
-            {isSaving ? 'Saving...' : 'Save'}
+            {isSaving ? 'Saving...' : 'Save Now'}
           </button>
         </div>
       </div>
@@ -300,7 +331,7 @@ export default function AdminPropertyEdit() {
           <div className="bg-white rounded-2xl p-2 shadow-sm border border-outline-variant/30 mb-6 block sm:hidden">
             <select
               value={activeTab}
-              onChange={(e) => setActiveTab(e.target.value)}
+              onChange={(e) => handleTabChange(e.target.value)}
               className="w-full bg-white px-4 py-2 text-sm font-bold text-slate-700 outline-none"
             >
               {tabs.map((tab) => (
@@ -314,8 +345,8 @@ export default function AdminPropertyEdit() {
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-label-bold text-xs whitespace-nowrap transition-colors ${
+                onClick={() => handleTabChange(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-label-bold text-xs whitespace-nowrap transition-colors cursor-pointer ${
                   activeTab === tab.id
                     ? 'bg-primary text-white shadow-sm'
                     : 'text-slate-600 hover:bg-slate-100'

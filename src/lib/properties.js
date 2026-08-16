@@ -140,6 +140,88 @@ export async function getPublishedProperty(slugOrId) {
   return null;
 }
 
+export function toAdminProperty(p) {
+  if (!p) return null;
+  
+  // If this property corresponds to a static property, merge the base static data first!
+  const baseStatic = (p.id || p.slug) 
+    ? (STATIC_PROPERTIES.find(sp => sp.id === p.id || sp.slug === p.slug || (p.id === 'dummy-draft-1' && sp.slug === 'godrej-woods') || (p.id === 'dummy-draft-2' && sp.slug === 'prestige-lakeside-habitat')) || {})
+    : {};
+
+  const merged = { ...baseStatic, ...p };
+
+  const media = merged.property_media || [];
+  const imageMedia = media.filter(m => m.media_type !== 'video');
+  const videoMedia = media.filter(m => m.media_type === 'video');
+
+  const coverUrl = merged.cover_image_url || (imageMedia.length > 0 ? imageMedia[0].public_url : '') || (merged.images && merged.images[0]) || merged.heroImage || '';
+  const allImages = imageMedia.length > 0
+    ? imageMedia.map(m => m.public_url)
+    : (merged.images && merged.images.length > 0 ? merged.images : (coverUrl ? [coverUrl] : []));
+
+  const videoUrl = merged.walkthrough_video_url || merged.walkthroughVideoUrl || (videoMedia.length > 0 ? videoMedia[0].public_url : '') || '';
+
+  const shortDesc = merged.description || merged.overview || baseStatic.description || baseStatic.overview || '';
+  const longDesc = merged.long_description || merged.longDescription || merged.description || baseStatic.longDescription || baseStatic.description || '';
+  const constructionStatus = merged.construction_status || merged.status || baseStatic.status || 'Under Construction';
+
+  return {
+    id: merged.id || '',
+    title: merged.title || baseStatic.title || '',
+    slug: merged.slug || baseStatic.slug || '',
+    developer: merged.developer || baseStatic.developer || '',
+    location: merged.location || baseStatic.location || '',
+    property_type: merged.property_type || merged.propertyType || baseStatic.propertyType || 'Luxury Apartment',
+    status: constructionStatus,
+    construction_status: constructionStatus,
+    starting_price: normalizePrice(merged.starting_price || merged.price || baseStatic.price || ''),
+    price_value: merged.price_value || merged.priceValue || baseStatic.priceValue || 0,
+    price_per_sqft: merged.price_per_sqft || merged.pricePerSqFt || baseStatic.pricePerSqFt || '',
+    bhk_options: (merged.bhk_options && merged.bhk_options.length > 0) ? merged.bhk_options : (merged.bhkOptions && merged.bhkOptions.length > 0 ? merged.bhkOptions : (baseStatic.bhkOptions || ['2 BHK', '3 BHK', '4 BHK'])),
+    configurations: merged.configurations || (merged.bhk_options ? merged.bhk_options.join(', ') : (baseStatic.configurations || '')),
+    carpet_area: merged.carpet_area || merged.carpetArea || baseStatic.carpetArea || '1,450 sq.ft.',
+    super_area: merged.super_area || merged.superArea || baseStatic.superArea || '1,890 sq.ft.',
+    land_parcel: merged.land_parcel || merged.landParcel || baseStatic.landParcel || '',
+    total_units: merged.total_units || merged.totalUnits || baseStatic.totalUnits || '',
+    tower_height: merged.tower_height || merged.towerHeight || baseStatic.towerHeight || '',
+    rera_id: merged.rera_id || merged.reraId || baseStatic.reraId || '',
+    rera_portal_url: merged.rera_portal_url || merged.reraPortalUrl || baseStatic.reraPortalUrl || '',
+    micromarket: merged.micromarket || baseStatic.micromarket || '',
+    micromarket_label: merged.micromarket_label || merged.micromarketLabel || baseStatic.micromarketLabel || merged.micromarket || '',
+    overview: shortDesc,
+    description: shortDesc,
+    long_description: longDesc,
+    full_address: merged.full_address || merged.fullAddress || (merged.location ? `${merged.location}, Bengaluru` : ''),
+    map_coordinates: merged.map_coordinates || merged.mapCoordinates || '13.0358, 77.5970',
+    developer_logo_url: merged.developer_logo_url || merged.developerLogoUrl || baseStatic.developerLogoUrl || '',
+    developer_experience: merged.developer_experience || merged.developerExperience || baseStatic.developerExperience || '25+ Years',
+    developer_projects_count: merged.developer_projects_count || merged.developerProjectsCount || baseStatic.developerProjectsCount || '40+ Projects',
+    developer_description: merged.developer_description || merged.developerDescription || baseStatic.developerDescription || '',
+    brochure_url: merged.brochure_url || merged.brochureUrl || baseStatic.brochureUrl || '',
+    master_plan_image_url: merged.master_plan_image_url || merged.masterPlanImageUrl || baseStatic.masterPlanImageUrl || '',
+    walkthrough_video_url: videoUrl,
+    cover_image_url: coverUrl,
+    pricing_matrix: (merged.pricing_matrix && merged.pricing_matrix.length > 0) ? merged.pricing_matrix : (baseStatic.pricingMatrix || []),
+    amenities: (merged.amenities && merged.amenities.length > 0) ? merged.amenities : (baseStatic.amenities || []),
+    proximity: (merged.proximity && merged.proximity.length > 0) ? merged.proximity : (baseStatic.proximity || []),
+    badges: (merged.badges && merged.badges.length > 0) ? merged.badges : (baseStatic.badges || []),
+    highlights: (merged.highlights && merged.highlights.length > 0) ? merged.highlights : (baseStatic.highlights || []),
+    recent_updates: (merged.recent_updates && merged.recent_updates.length > 0) ? merged.recent_updates : (baseStatic.recentUpdates || []),
+    specifications: (merged.specifications && merged.specifications.length > 0) ? merged.specifications : (baseStatic.specifications || []),
+    price_insights: (merged.price_insights && merged.price_insights.length > 0) ? merged.price_insights : (baseStatic.priceInsights || []),
+    buyer_personas: (merged.buyer_personas && merged.buyer_personas.length > 0) ? merged.buyer_personas : (baseStatic.buyerPersonas || []),
+    floor_plans: (merged.floor_plans && merged.floor_plans.length > 0) ? merged.floor_plans : (baseStatic.floorPlans || []),
+    publish_state: merged.publish_state || 'draft',
+    featured: merged.featured ?? false,
+    seo_title: merged.seo_title || (merged.title ? `${merged.title} | Luxury Real Estate` : ''),
+    seo_description: merged.seo_description || shortDesc || '',
+    seo_keywords: merged.seo_keywords || '',
+    created_at: merged.created_at || new Date().toISOString(),
+    updated_at: merged.updated_at || new Date().toISOString(),
+    property_media: media.length > 0 ? media : allImages.map((img, i) => ({ id: `img-${i}`, public_url: img, media_type: 'image', is_cover: i === 0, display_order: i }))
+  };
+}
+
 // ─────────────────────────────────────────────────────
 // ADMIN: Fetch all properties (including drafts)
 // ─────────────────────────────────────────────────────
@@ -150,8 +232,11 @@ function getLocalCache() {
   const saved = localStorage.getItem('questspaces_local_properties');
   if (saved) {
     try {
-      _localPropertiesCache = JSON.parse(saved);
-      return _localPropertiesCache;
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        _localPropertiesCache = parsed.map(p => toAdminProperty(p));
+        return _localPropertiesCache;
+      }
     } catch (e) {
       console.warn('Local properties cache corrupted, resetting.');
     }
@@ -159,29 +244,12 @@ function getLocalCache() {
   
   _localPropertiesCache = [];
   if (STATIC_PROPERTIES && STATIC_PROPERTIES.length > 0) {
-    _localPropertiesCache.push({
-      id: 'dummy-draft-1',
-      title: 'Godrej Woods',
-      slug: 'godrej-woods',
-      developer: 'Godrej Properties',
-      location: 'Noida',
-      publish_state: 'draft',
-      featured: false,
-      property_type: 'Luxury Apartment',
-      created_at: new Date(Date.now() - 86400000).toISOString(),
-      updated_at: new Date(Date.now() - 86400000).toISOString()
-    });
-    _localPropertiesCache.push({
-      id: 'dummy-draft-2',
-      title: 'Prestige Lakeside Habitat',
-      slug: 'prestige-lakeside-habitat',
-      developer: 'Prestige Group',
-      location: 'Bangalore',
-      publish_state: 'draft',
-      featured: false,
-      property_type: 'Modern Villa',
-      created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-      updated_at: new Date(Date.now() - 86400000 * 2).toISOString()
+    STATIC_PROPERTIES.forEach((sp, idx) => {
+      _localPropertiesCache.push(toAdminProperty({
+        ...sp,
+        id: sp.id || `dummy-draft-${idx + 1}`,
+        publish_state: idx === 0 || idx === 1 ? 'draft' : 'published',
+      }));
     });
     
     saveLocalCache(_localPropertiesCache);
@@ -195,6 +263,10 @@ function saveLocalCache(cache) {
 }
 
 export async function getAllProperties(filters = {}) {
+  const pState = filters.publishState ? String(filters.publishState).toLowerCase() : 'all';
+  const pType = filters.propertyType && filters.propertyType !== 'All' ? filters.propertyType : null;
+  const searchTerm = filters.search ? String(filters.search).toLowerCase().trim() : '';
+
   let dbProps = [];
   if (supabase) {
     try {
@@ -203,8 +275,11 @@ export async function getAllProperties(filters = {}) {
         .select('*, property_media(id, public_url, is_cover, display_order, media_type)')
         .order('created_at', { ascending: false });
 
-      if (filters.publishState && filters.publishState !== 'all') {
-        query = query.eq('publish_state', filters.publishState);
+      if (pState !== 'all') {
+        query = query.eq('publish_state', pState);
+      }
+      if (pType) {
+        query = query.eq('property_type', pType);
       }
       
       const { data, error } = await query;
@@ -217,17 +292,26 @@ export async function getAllProperties(filters = {}) {
   }
 
   let localProps = getLocalCache();
-  if (filters.publishState && filters.publishState !== 'all') {
-    localProps = localProps.filter(p => p.publish_state === filters.publishState);
+  if (pState !== 'all') {
+    localProps = localProps.filter(p => (p.publish_state || 'draft').toLowerCase() === pState);
+  }
+  if (pType) {
+    localProps = localProps.filter(p => (p.property_type || p.propertyType) === pType);
   }
 
   const localOnly = localProps.filter(lp => !dbProps.some(dp => dp.id === lp.id));
-  const merged = [...dbProps, ...localOnly];
+  let merged = [...dbProps, ...localOnly];
 
-  return merged.map(p => ({
-    ...p,
-    starting_price: normalizePrice(p.starting_price)
-  }));
+  if (searchTerm) {
+    merged = merged.filter(p => 
+      (p.title && p.title.toLowerCase().includes(searchTerm)) ||
+      (p.location && p.location.toLowerCase().includes(searchTerm)) ||
+      (p.developer && p.developer.toLowerCase().includes(searchTerm)) ||
+      (p.slug && p.slug.toLowerCase().includes(searchTerm))
+    );
+  }
+
+  return merged.map(p => toAdminProperty(p));
 }
 
 // ─────────────────────────────────────────────────────
@@ -249,14 +333,19 @@ export async function getPropertyById(idOrSlug) {
       }
 
       const { data, error } = await query.single();
-      if (!error && data) return { ...data, starting_price: normalizePrice(data.starting_price) };
+      if (!error && data) return toAdminProperty(data);
     } catch (err) {
-      console.warn('Supabase getPropertyById failed, checking static properties:', err);
+      console.warn('Supabase getPropertyById failed, checking local cache & static properties:', err);
     }
   }
 
-  const found = getLocalCache().find(p => p.id === idOrSlug || p.slug === idOrSlug);
-  if (found) return { ...found, starting_price: normalizePrice(found.starting_price) };
+  const cache = getLocalCache();
+  const found = cache.find(p => p.id === idOrSlug || p.slug === idOrSlug);
+  if (found) return toAdminProperty(found);
+
+  const staticFound = STATIC_PROPERTIES.find(p => p.id === idOrSlug || p.slug === idOrSlug);
+  if (staticFound) return toAdminProperty(staticFound);
+
   throw new Error(`Property "${idOrSlug}" not found`);
 }
 
@@ -265,29 +354,35 @@ export async function getPropertyById(idOrSlug) {
 // ─────────────────────────────────────────────────────
 export async function createProperty(propertyData) {
   const { property_media, leads_count, id: _id, ...cleanData } = propertyData;
-  if (!supabase) {
-    throw new Error('Supabase is not configured. Cannot create properties offline.');
+  const newProperty = toAdminProperty({
+    ...cleanData,
+    id: `prop-${Date.now()}`,
+    publish_state: 'draft'
+  });
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .insert([{ ...cleanData, publish_state: 'draft' }])
+        .select()
+        .single();
+
+      if (!error && data) {
+        const cache = getLocalCache();
+        cache.unshift(toAdminProperty(data));
+        saveLocalCache(cache);
+        return toAdminProperty(data);
+      }
+    } catch (err) {
+      console.warn('Supabase createProperty error, saving to local cache:', err);
+    }
   }
 
-  const { data, error } = await supabase
-    .from('properties')
-    .insert([{ ...cleanData, publish_state: 'draft' }])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Supabase createProperty error:', error);
-    throw new Error(error.message || 'Failed to create property in database');
-  }
-
-  if (data) {
-    const cache = getLocalCache();
-    cache.unshift({ ...data });
-    saveLocalCache(cache);
-    return data;
-  }
-  
-  throw new Error('Failed to create property');
+  const cache = getLocalCache();
+  cache.unshift(newProperty);
+  saveLocalCache(cache);
+  return newProperty;
 }
 
 // ─────────────────────────────────────────────────────
@@ -295,42 +390,49 @@ export async function createProperty(propertyData) {
 // ─────────────────────────────────────────────────────
 export async function updateProperty(idOrSlug, updates) {
   const { property_media, leads_count, id: bodyId, ...cleanUpdates } = updates;
-  
   const targetId = bodyId || idOrSlug;
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId);
 
-  if (!supabase) {
-    throw new Error('Supabase is not configured. Cannot update properties offline.');
-  }
+  // 1. Update local cache immediately
+  const cache = getLocalCache();
+  const index = cache.findIndex(p => p.id === targetId || p.slug === targetId);
+  const updatedItem = toAdminProperty({
+    ...(index !== -1 ? cache[index] : {}),
+    ...cleanUpdates,
+    id: targetId,
+    updated_at: new Date().toISOString()
+  });
 
-  let query = supabase
-    .from('properties')
-    .update({ ...cleanUpdates, updated_at: new Date().toISOString() });
-
-  if (isUUID) {
-    query = query.eq('id', targetId);
+  if (index !== -1) {
+    cache[index] = updatedItem;
   } else {
-    query = query.eq('slug', targetId);
+    cache.unshift(updatedItem);
+  }
+  saveLocalCache(cache);
+
+  // 2. If Supabase is connected, update remote DB
+  if (supabase) {
+    try {
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId);
+      let query = supabase
+        .from('properties')
+        .update({ ...cleanUpdates, updated_at: new Date().toISOString() });
+
+      if (isUUID) {
+        query = query.eq('id', targetId);
+      } else {
+        query = query.eq('slug', targetId);
+      }
+
+      const { data, error } = await query.select().single();
+      if (!error && data) {
+        return toAdminProperty(data);
+      }
+    } catch (err) {
+      console.warn('Supabase update failed, saved locally:', err);
+    }
   }
 
-  const { data, error } = await query.select().single();
-  
-  if (error) {
-    console.error('Supabase updateProperty error:', error);
-    throw new Error(error.message || 'Failed to update property in database');
-  }
-
-  if (data) {
-     const cache = getLocalCache();
-     const index = cache.findIndex(p => p.id === targetId || p.slug === targetId);
-     if (index !== -1) {
-        cache[index] = { ...cache[index], ...cleanUpdates, updated_at: new Date().toISOString() };
-        saveLocalCache(cache);
-     }
-     return data;
-  }
-  
-  throw new Error('Failed to update property');
+  return updatedItem;
 }
 
 // ─────────────────────────────────────────────────────

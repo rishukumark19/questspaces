@@ -51,6 +51,7 @@ export default function PropertyDetail({
 
   // ── Gallery state ────────────────────────────────────────────────────────
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [heroMode, setHeroMode] = useState('photos'); // 'photos' | 'video'
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
@@ -271,39 +272,40 @@ export default function PropertyDetail({
         className="no-print"
         style={{
           position: 'fixed',
-          top: showStickyNav ? '64px' : '-80px',
+          top: showStickyNav ? (isPreview ? '52px' : '72px') : '-100px',
           left: 0,
           right: 0,
           zIndex: 40,
           transition: 'top 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          background: 'rgba(255,255,255,0.95)',
-          backdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(0,0,0,0.08)',
-          boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
+          background: 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(16px)',
+          borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
         }}
       >
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
-          <div className="flex items-center gap-1 overflow-x-auto hide-scrollbar py-1.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar py-2">
             {SECTIONS.map(({ id: sid, label, icon }) => (
               <button
                 key={sid}
+                type="button"
                 onClick={() => scrollToSection(sid)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all shrink-0 border-none cursor-pointer"
-                style={{
-                  background: activeSectionId === sid ? 'var(--color-primary)' : 'transparent',
-                  color: activeSectionId === sid ? '#fff' : 'var(--color-on-surface-variant)',
-                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all shrink-0 border-none cursor-pointer ${
+                  activeSectionId === sid
+                    ? 'bg-slate-900 text-amber-300 shadow-sm'
+                    : 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                }`}
               >
-                <span className="material-symbols-outlined text-[14px]">{icon}</span>
-                {label}
+                <span className="material-symbols-outlined text-[15px]">{icon}</span>
+                <span>{label}</span>
               </button>
             ))}
             {/* Quick CTA in nav */}
-            <div className="ml-auto shrink-0">
+            <div className="ml-auto shrink-0 pl-2">
               <button
+                type="button"
                 onClick={() => onOpenVIPModal && onOpenVIPModal(`Inquiry: ${property.title}`)}
-                className="px-4 py-1.5 rounded-lg text-xs font-bold text-white border-none cursor-pointer transition-colors"
-                style={{ background: 'var(--color-primary)' }}
+                className="px-4 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 border-none cursor-pointer transition-colors shadow-sm"
               >
                 Get Best Price
               </button>
@@ -312,27 +314,22 @@ export default function PropertyDetail({
         </div>
       </div>
 
-      {/* ── Breadcrumb ──────────────────────────────────────────────────── */}
-      <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-4 flex justify-between items-center no-print">
-        <Link to="/properties" className="text-sm font-label-bold text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1 w-fit">
-          <span className="material-symbols-outlined text-sm">arrow_back</span> Back to Properties
-        </Link>
-        <button
-          onClick={() => window.print()}
-          className="bg-primary/5 hover:bg-primary/10 text-primary px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
-        >
-          <span className="material-symbols-outlined text-[16px]">print</span> Print Brochure
-        </button>
-      </div>
-
-      {/* ── Breadcrumb trail ────────────────────────────────────────────── */}
-      <div className="w-full bg-surface/70 backdrop-blur-xl border-b border-outline-variant/20 pt-[72px]">
-        <div className="flex items-center px-margin-mobile md:px-margin-desktop py-4 max-w-container-max mx-auto font-label-sm text-label-sm text-on-surface-variant">
-          <Link to="/" className="hover:text-primary transition-colors">Home</Link>
-          <span className="mx-2">/</span>
-          <Link to="/properties" className="hover:text-primary transition-colors">Properties</Link>
-          <span className="mx-2">/</span>
-          <span className="text-on-surface font-label-bold">{property.title}</span>
+      {/* ── Breadcrumb Bar ──────────────────────────────────────────── */}
+      <div className={`w-full bg-surface/80 backdrop-blur-md border-b border-outline-variant/20 no-print ${isPreview ? 'pt-3 pb-3' : 'pt-20 pb-3'}`}>
+        <div className="flex items-center justify-between px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+          <div className="flex items-center font-label-sm text-label-sm text-on-surface-variant">
+            <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+            <span className="mx-2 text-slate-400">/</span>
+            <Link to="/properties" className="hover:text-primary transition-colors">Properties</Link>
+            <span className="mx-2 text-slate-400">/</span>
+            <span className="text-on-surface font-label-bold truncate max-w-[200px] sm:max-w-md">{property.title}</span>
+          </div>
+          <button
+            onClick={() => window.print()}
+            className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer border border-slate-200"
+          >
+            <span className="material-symbols-outlined text-[16px]">print</span> Print
+          </button>
         </div>
       </div>
 
@@ -342,70 +339,117 @@ export default function PropertyDetail({
         <section ref={heroRef} className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop mb-stack-lg">
 
           <div
-            className="relative h-[300px] sm:h-[450px] md:h-[600px] lg:h-[716px] rounded-xl overflow-hidden image-border-protect group cursor-pointer"
-            onClick={() => setIsLightboxOpen(true)}
+            className="relative h-[300px] sm:h-[450px] md:h-[600px] lg:h-[716px] rounded-xl overflow-hidden image-border-protect group"
           >
-            <img
-              alt={property.title}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              src={property.images ? property.images[activeImageIndex] : property.heroImage}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-primary-container/80 via-transparent to-transparent pointer-events-none" />
-
-            <div className="absolute top-stack-md left-stack-md flex items-center gap-2">
-              <div className="bg-surface/40 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-sm flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[14px]">photo_library</span>
-                {activeImageIndex + 1} / {property.images?.length || 1}
-              </div>
-              {videoInfo && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setIsVideoModalOpen(true); }}
-                  className="bg-primary/90 hover:bg-primary text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-md flex items-center gap-1.5 transition-all hover:scale-105 border border-white/20 cursor-pointer"
-                  title="Watch Video Walkthrough"
-                >
-                  <span className="material-symbols-outlined text-[16px] text-amber-300">play_circle</span>
-                  <span>Video Tour</span>
-                </button>
-              )}
-            </div>
-
-            <div className="absolute top-stack-md right-stack-md">
-              <button
-                onClick={(e) => { e.stopPropagation(); onToggleSave(property); }}
-                className="glass-panel w-12 h-12 rounded-full flex items-center justify-center hover:bg-surface/90 transition-colors"
-                aria-label="Save property"
-              >
-                <span
-                  className="material-symbols-outlined text-primary"
-                  style={{ fontVariationSettings: isSaved ? "'FILL' 1" : "'FILL' 0" }}
-                >
-                  favorite
-                </span>
-              </button>
-            </div>
-
-            <div className="absolute bottom-stack-md left-stack-md right-stack-md flex justify-between items-end">
-              <div>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {property.badges.map((badge, idx) => (
-                    <span
-                      key={idx}
-                      className="px-3 py-1 bg-surface/20 backdrop-blur-md border border-surface/30 rounded-full font-label-sm text-label-sm text-on-tertiary uppercase tracking-widest"
-                    >
-                      {badge}
-                    </span>
-                  ))}
+            {heroMode === 'video' && videoInfo ? (
+              <div className="w-full h-full bg-black relative">
+                {videoInfo.type === 'youtube' || videoInfo.type === 'vimeo' || videoInfo.type === 'custom' ? (
+                  <iframe
+                    src={videoInfo.embedUrl}
+                    title={`${property.title} Video Tour`}
+                    className="w-full h-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video
+                    src={videoInfo.embedUrl}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-cover"
+                    poster={property.heroImage}
+                  />
+                )}
+                {/* Top overlay controls in video mode */}
+                <div className="absolute top-stack-md left-stack-md flex items-center gap-2 z-20">
+                  <button
+                    type="button"
+                    onClick={() => setHeroMode('photos')}
+                    className="bg-black/70 hover:bg-black/90 text-white backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs font-bold shadow-md flex items-center gap-1.5 transition-all border border-white/20 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">photo_library</span>
+                    <span>View Photos ({property.images?.length || 1})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsVideoModalOpen(true)}
+                    className="bg-black/70 hover:bg-black/90 text-white backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold shadow-md flex items-center gap-1.5 transition-all border border-white/20 cursor-pointer"
+                    title="Fullscreen"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">fullscreen</span>
+                  </button>
                 </div>
               </div>
-              <div className="flex gap-4">
-                <button onClick={(e) => { e.stopPropagation(); handlePrevImage(); }} className="glass-panel p-3 rounded-full hover:bg-surface/90 transition-colors group/btn">
-                  <span className="material-symbols-outlined text-primary group-hover/btn:scale-110 transition-transform">chevron_left</span>
-                </button>
-                <button onClick={(e) => { e.stopPropagation(); handleNextImage(); }} className="glass-panel p-3 rounded-full hover:bg-surface/90 transition-colors group/btn">
-                  <span className="material-symbols-outlined text-primary group-hover/btn:scale-110 transition-transform">chevron_right</span>
-                </button>
+            ) : (
+              <div 
+                className="w-full h-full relative cursor-pointer"
+                onClick={() => setIsLightboxOpen(true)}
+              >
+                <img
+                  alt={property.title}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  src={property.images ? property.images[activeImageIndex] : property.heroImage}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-primary-container/80 via-transparent to-transparent pointer-events-none" />
+
+                <div className="absolute top-stack-md left-stack-md flex items-center gap-2">
+                  <div className="bg-surface/40 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-sm flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[14px]">photo_library</span>
+                    {activeImageIndex + 1} / {property.images?.length || 1}
+                  </div>
+                  {videoInfo && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setHeroMode('video'); }}
+                      className="bg-surface/70 hover:bg-surface/95 text-on-surface backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all border border-surface/30 cursor-pointer"
+                      title="Play Video Walkthrough"
+                    >
+                      <span className="material-symbols-outlined text-[16px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>play_circle</span>
+                      <span>Play Video Tour</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="absolute top-stack-md right-stack-md">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onToggleSave(property); }}
+                    className="glass-panel w-12 h-12 rounded-full flex items-center justify-center hover:bg-surface/90 transition-colors"
+                    aria-label="Save property"
+                  >
+                    <span
+                      className="material-symbols-outlined text-primary"
+                      style={{ fontVariationSettings: isSaved ? "'FILL' 1" : "'FILL' 0" }}
+                    >
+                      favorite
+                    </span>
+                  </button>
+                </div>
+
+                <div className="absolute bottom-stack-md left-stack-md right-stack-md flex justify-between items-end">
+                  <div>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {property.badges.map((badge, idx) => (
+                        <span
+                          key={idx}
+                          className="px-3 py-1 bg-surface/20 backdrop-blur-md border border-surface/30 rounded-full font-label-sm text-label-sm text-on-tertiary uppercase tracking-widest"
+                        >
+                          {badge}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <button type="button" onClick={(e) => { e.stopPropagation(); handlePrevImage(); }} className="glass-panel p-3 rounded-full hover:bg-surface/90 transition-colors group/btn">
+                      <span className="material-symbols-outlined text-primary group-hover/btn:scale-110 transition-transform">chevron_left</span>
+                    </button>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); handleNextImage(); }} className="glass-panel p-3 rounded-full hover:bg-surface/90 transition-colors group/btn">
+                      <span className="material-symbols-outlined text-primary group-hover/btn:scale-110 transition-transform">chevron_right</span>
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Thumbnail strip */}
@@ -413,9 +457,10 @@ export default function PropertyDetail({
             {property.images && property.images.map((img, idx) => (
               <button
                 key={idx}
-                onClick={() => setActiveImageIndex(idx)}
+                type="button"
+                onClick={() => { setHeroMode('photos'); setActiveImageIndex(idx); }}
                 className={`relative w-24 h-16 rounded-lg overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${
-                  activeImageIndex === idx ? 'border-primary opacity-100' : 'border-transparent opacity-60 hover:opacity-100'
+                  heroMode === 'photos' && activeImageIndex === idx ? 'border-primary opacity-100' : 'border-transparent opacity-60 hover:opacity-100'
                 }`}
               >
                 <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
@@ -426,14 +471,16 @@ export default function PropertyDetail({
             {videoInfo && (
               <button
                 type="button"
-                onClick={() => setIsVideoModalOpen(true)}
-                className="relative w-28 h-16 rounded-lg overflow-hidden shrink-0 border-2 border-primary/50 bg-slate-900 flex flex-col items-center justify-center text-white cursor-pointer hover:border-primary group shadow-sm transition-all"
+                onClick={() => setHeroMode('video')}
+                className={`relative w-24 h-16 rounded-lg overflow-hidden shrink-0 border-2 transition-all cursor-pointer group shadow-sm ${
+                  heroMode === 'video' ? 'border-primary opacity-100 ring-2 ring-primary/20' : 'border-outline-variant/30 opacity-70 hover:opacity-100'
+                }`}
               >
                 {videoInfo.thumbnailUrl ? (
-                  <img src={videoInfo.thumbnailUrl} alt="Video preview" className="w-full h-full object-cover opacity-60 group-hover:opacity-90 transition-opacity" />
+                  <img src={videoInfo.thumbnailUrl} alt="Video preview" className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity" />
                 ) : null}
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
-                  <span className="material-symbols-outlined text-amber-400 text-2xl group-hover:scale-110 transition-transform">play_circle</span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[1px]">
+                  <span className="material-symbols-outlined text-amber-300 text-2xl group-hover:scale-110 transition-transform">play_circle</span>
                   <span className="text-[9px] font-bold uppercase tracking-wider text-white">Video Tour</span>
                 </div>
               </button>
@@ -869,27 +916,41 @@ export default function PropertyDetail({
                 </div>
               )}
 
-              {/* Virtual Video Tour Section */}
+              {/* Video Walkthrough Experience Section */}
               {videoInfo && (
-                <div className="bg-slate-900 text-white p-6 sm:p-8 rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div className="bg-surface-container-lowest p-6 sm:p-8 rounded-xl border border-outline-variant/20 premium-shadow space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <div className="flex items-center gap-2 text-amber-400 text-xs uppercase font-bold tracking-widest mb-1">
-                        <span className="material-symbols-outlined text-[16px]">videocam</span> Virtual Experience
+                      <div className="flex items-center gap-2 text-primary font-label-bold text-xs uppercase tracking-widest mb-1">
+                        <span className="material-symbols-outlined text-[16px]">videocam</span> Architecture & Space
                       </div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-white">Video Walkthrough & Tour</h3>
-                      <p className="text-xs text-slate-400 mt-1">Take an immersive virtual tour of {property.title}.</p>
+                      <h3 className="font-headline-sm text-headline-sm text-on-surface">Virtual Walkthrough</h3>
+                      <p className="font-body-md text-on-surface-variant text-sm mt-1">
+                        Take an interactive cinematic tour of {property.title} and its curated residences.
+                      </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setIsVideoModalOpen(true)}
-                      className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-2 self-start sm:self-auto border border-white/20 cursor-pointer shadow-sm"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">fullscreen</span> Expand Fullscreen
-                    </button>
+                    
+                    <div className="flex items-center gap-2 self-start sm:self-auto">
+                      <button
+                        type="button"
+                        onClick={() => onOpenVIPModal && onOpenVIPModal(`Guided Virtual Tour: ${property.title}`)}
+                        className="px-4 py-2 bg-primary hover:bg-primary-container text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 border-none cursor-pointer shadow-sm"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">person_pin_circle</span> Request Live Guided Tour
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsVideoModalOpen(true)}
+                        className="px-3.5 py-2 bg-surface-container-low hover:bg-surface-container text-on-surface rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 border border-outline-variant/30 cursor-pointer shadow-sm"
+                        title="Fullscreen Player"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">fullscreen</span>
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="relative aspect-video rounded-xl overflow-hidden bg-black shadow-inner border border-white/10">
+                  {/* Frame */}
+                  <div className="relative aspect-video rounded-xl overflow-hidden bg-surface-container border border-outline-variant/20 shadow-md">
                     {videoInfo.type === 'youtube' || videoInfo.type === 'vimeo' || videoInfo.type === 'custom' ? (
                       <iframe
                         src={videoInfo.embedUrl}
@@ -906,6 +967,22 @@ export default function PropertyDetail({
                         poster={property.heroImage}
                       />
                     )}
+                  </div>
+
+                  {/* Highlights Bar below player */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-outline-variant/10 text-xs text-on-surface-variant">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary text-[18px]">hd</span>
+                      <span className="font-semibold text-on-surface">4K Ultra-HD Walkthrough</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary text-[18px]">volume_up</span>
+                      <span className="font-semibold text-on-surface">Ambient Spatial Audio</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary text-[18px]">domain</span>
+                      <span className="font-semibold text-on-surface">Architectural & Model Tour</span>
+                    </div>
                   </div>
                 </div>
               )}
